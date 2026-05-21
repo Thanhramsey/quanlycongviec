@@ -58,12 +58,12 @@
                 </div>
 
                 <!-- Account Badge -->
-                <div class="flex items-center gap-2.5 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
+                <button onclick="openProfileModal()" class="flex items-center gap-2.5 bg-slate-800 hover:bg-slate-750 px-3 py-1.5 rounded-xl border border-slate-700 cursor-pointer transition-all text-white text-left focus:outline-none">
                     <img 
                         src="<?= $currentUser['avatar'] ?? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150' ?>" 
                         alt="Avatar" 
                         class="w-6.5 h-6.5 rounded-full object-cover border border-slate-600">
-                    <div class="hidden sm:block text-left">
+                    <div class="hidden sm:block">
                         <p class="text-xs font-bold leading-tight"><?= esc($currentUser['name']) ?></p>
                         <span class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold font-mono">
                             <?php 
@@ -73,7 +73,7 @@
                             ?>
                         </span>
                     </div>
-                </div>
+                </button>
 
                 <!-- Logout Link -->
                 <a href="<?= base_url('logout') ?>" 
@@ -355,39 +355,65 @@
 
             <!-- TAB CONTAINER 3: CATEGORY MANAGEMENT -->
             <section id="viewport-categories" class="viewport-tab hidden space-y-6">
-                <div>
-                    <h1 class="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                        <i data-lucide="tags" class="text-indigo-600 w-6 h-6"></i> Tổ Chức Danh Mục Kỹ Thuật
-                    </h1>
-                    <p class="text-xs text-slate-500">Khai báo danh mục công đoạn đóng đồ gỗ (ví dụ: Chà nhám, Đóng tủ bếp, Sơn PU) hỗ trợ chia ca phân công.</p>
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                            <i data-lucide="tags" class="text-indigo-600 w-6 h-6"></i> Thiết Lập Danh Mục Cơ Sở
+                        </h1>
+                        <p class="text-xs text-slate-500">Quản trị danh mục chức danh chuyên môn, danh mục quyền hạn phân hệ và danh sách các lĩnh vực loại công việc linh hoạt.</p>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- Categories List Panel -->
-                    <div class="md:col-span-2 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
-                        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest border-b border-slate-100 pb-2">Danh sách công đoạn khả dụng</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="categories-grid">
-                            <!-- Preloaded categories via standard dynamic PHP block -->
-                            <?php foreach($categories as $cat): ?>
-                            <div class="p-4 bg-slate-50 border border-slate-150 rounded-xl space-y-2 relative group hover:bg-slate-100/50 transition-colors">
-                                <div class="flex justify-between items-start">
-                                    <h4 class="font-bold text-slate-800 text-xs"><?= esc($cat['name']) ?></h4>
-                                    <span class="text-[9px] font-mono text-slate-400">ID: <?= esc($cat['id']) ?></span>
-                                </div>
-                                <p class="text-[11px] text-slate-500 leading-relaxed"><?= esc($cat['description'] ?: 'Không có chú thích mô tả.') ?></p>
-                            </div>
-                            <?php endforeach; ?>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Column 1: Positions -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                        <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                            <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest flex items-center gap-1.5">
+                                <i data-lucide="briefcase" class="w-4 h-4 text-indigo-500"></i> Chức danh & Vị trí
+                            </h3>
+                            <?php if ($currentUser['role'] === 'admin' || in_array('p5', $currentUser['custom_permissions'] ?? [])): ?>
+                            <button onclick="openCategoryModal('positions')" class="text-[10px] font-extrabold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer">
+                                <i data-lucide="plus" class="w-3 h-3"></i> + THÊM VỊ TRÍ
+                            </button>
+                            <?php endif; ?>
+                        </div>
+                        <div class="space-y-3 max-h-[380px] overflow-y-auto pr-1" id="list-positions">
+                            <div class="text-slate-400 text-xs italic py-4 text-center">Đang nạp danh mục...</div>
                         </div>
                     </div>
 
-                    <!-- Side guidelines info -->
-                    <div class="p-5 bg-white border border-slate-200 rounded-2xl shadow-sm h-fit space-y-3">
-                        <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1">
-                            <i data-lucide="info" class="w-4 h-4 text-indigo-600"></i> Ý nghĩa danh mục
-                        </h4>
-                        <p class="text-xs text-slate-500 leading-relaxed">
-                            Mỗi công đoạn đóng đồ mộc giúp thống kê chính xác lượng thợ thực thi và tiến độ chung một cách tự động khóa % khi giao mộc tháp ráp.
-                        </p>
+                    <!-- Column 2: Job Categories -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                        <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                            <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest flex items-center gap-1.5">
+                                <i data-lucide="layers" class="w-4 h-4 text-blue-500"></i> Loại công việc
+                            </h3>
+                            <?php if ($currentUser['role'] === 'admin' || in_array('p5', $currentUser['custom_permissions'] ?? [])): ?>
+                            <button onclick="openCategoryModal('jobs')" class="text-[10px] font-extrabold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer">
+                                <i data-lucide="plus" class="w-3 h-3"></i> + THÊM LOẠI VIỆC
+                            </button>
+                            <?php endif; ?>
+                        </div>
+                        <div class="space-y-3 max-h-[380px] overflow-y-auto pr-1" id="list-job-categories">
+                            <div class="text-slate-400 text-xs italic py-4 text-center">Đang nạp danh mục...</div>
+                        </div>
+                    </div>
+
+                    <!-- Column 3: Permissions -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                        <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                            <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest flex items-center gap-1.5">
+                                <i data-lucide="shield-check" class="w-4 h-4 text-emerald-500"></i> Danh mục quyền quyền hạn
+                            </h3>
+                            <?php if ($currentUser['role'] === 'admin' || in_array('p5', $currentUser['custom_permissions'] ?? [])): ?>
+                            <button onclick="openCategoryModal('permissions')" class="text-[10px] font-extrabold text-emerald-600 hover:text-emerald-850 flex items-center gap-1 cursor-pointer">
+                                <i data-lucide="plus" class="w-3 h-3"></i> + THÊM QUYỀN HẠN
+                            </button>
+                            <?php endif; ?>
+                        </div>
+                        <div class="space-y-3 max-h-[380px] overflow-y-auto pr-1" id="list-permissions">
+                            <div class="text-slate-400 text-xs italic py-4 text-center">Đang nạp danh mục...</div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -759,6 +785,107 @@
         </div>
     </div>
 
+    <!-- 4. Profile Edit Modal -->
+    <div id="profile-modal" class="hidden fixed inset-0 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 no-print">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 p-6 space-y-5 animate-in fade-in duration-250">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-150">
+                <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <i data-lucide="user" class="text-indigo-600 w-5 h-5"></i> <span>Hồ Sơ Cá Nhân</span>
+                </h3>
+                <button onclick="closeProfileModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+
+            <form id="profile-form" class="space-y-4" onsubmit="handleProfileSubmit(event)">
+                <!-- Avatar Upload Section -->
+                <div class="space-y-1 text-center">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Ảnh đại diện</label>
+                    <input type="file" id="profile-avatar-file" accept="image/png, image/jpeg, image/jpg" class="hidden" onchange="previewProfileAvatar(event)">
+                    <div onclick="document.getElementById('profile-avatar-file').click()" class="relative group cursor-pointer w-20 h-20 mx-auto rounded-full overflow-hidden border-2 border-slate-200 hover:border-slate-400 transition-all shadow-sm">
+                        <img id="profile-avatar-preview" src="<?= $currentUser['avatar'] ?? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150' ?>" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/45 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i data-lucide="camera" class="w-5 h-5 text-white"></i>
+                        </div>
+                    </div>
+                    <span class="block text-[9px] text-slate-400 mt-1">Ấn để thay đổi (PNG/JPG)</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Họ và tên</label>
+                        <input type="text" id="profile-name" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Số điện thoại</label>
+                        <input type="text" id="profile-phone" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Căn cước công dân</label>
+                        <input type="text" id="profile-ic" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Ngày sinh</label>
+                        <input type="date" id="profile-dob" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Địa chỉ cư trú</label>
+                    <input type="text" id="profile-address" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Mật khẩu mới (Bỏ trống nếu không đổi)</label>
+                    <input type="password" id="profile-password" placeholder="Nhập để đặt mật khẩu mới..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
+                </div>
+
+                <div class="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeProfileModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-bold text-slate-700 cursor-pointer">Bỏ qua</button>
+                    <button type="submit" id="btn-profile-submit" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm cursor-pointer">Lưu hồ sơ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 5. Master Category Modal (Add / Edit) -->
+    <div id="category-modal" class="hidden fixed inset-0 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 no-print">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 p-6 space-y-5 animate-in fade-in duration-200">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-150">
+                <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <i data-lucide="tags" class="text-indigo-600 w-5 h-5"></i> <span id="category-modal-title">Cập nhật danh mục</span>
+                </h3>
+                <button onclick="closeCategoryModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+
+            <form id="category-form" class="space-y-4" onsubmit="handleCategorySubmit(event)">
+                <input type="hidden" id="category-type" value=""> <!-- positions, jobs, permissions -->
+                <input type="hidden" id="category-edit-id" value="">
+
+                <div id="category-id-field-wrapper" class="hidden">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Mã định danh (ID) <span class="text-rose-500">*</span></label>
+                    <input type="text" id="category-item-id" placeholder="Ví dụ: p6" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tên mục hiển thị <span class="text-rose-500">*</span></label>
+                    <input type="text" id="category-name" required placeholder="Nhập nhãn danh mục..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Mô tả chi tiết</label>
+                    <textarea id="category-description" rows="3" placeholder="Nhập diễn giải ngắn gọn..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeCategoryModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-bold text-slate-700 cursor-pointer">Bỏ qua</button>
+                    <button type="submit" id="btn-category-submit" class="px-4 py-2 bg-indigo-650 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm cursor-pointer">Lưu cập nhật</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 
     <footer class="bg-slate-900 text-slate-500 py-6 border-t border-slate-800 text-center text-xs mt-auto no-print">
         <p class="flex items-center justify-center gap-1">
@@ -779,6 +906,9 @@
         let cacheTasks = [];
         let cacheLogs = [];
         let cacheStats = null;
+        let cachePositions = [];
+        let cacheJobCategories = [];
+        let cachePermissions = [];
 
         // Initialize Lucide Icons initially
         lucide.createIcons();
@@ -800,17 +930,24 @@
         async function syncData() {
             try {
                 // Parrallel requests to API Controllers
-                const [staffRes, tasksRes, logsRes, statsRes] = await Promise.all([
+                const [staffRes, tasksRes, logsRes, statsRes, categoriesRes] = await Promise.all([
                     fetch('<?= base_url('api/users') ?>'),
                     fetch('<?= base_url('api/tasks') ?>'),
                     fetch('<?= base_url('api/logs') ?>'),
-                    fetch('<?= base_url('api/dashboard/stats') ?>')
+                    fetch('<?= base_url('api/dashboard/stats') ?>'),
+                    fetch('<?= base_url('api/categories') ?>')
                 ]);
 
                 if (staffRes.ok) cacheStaff = await staffRes.json();
                 if (tasksRes.ok) cacheTasks = await tasksRes.json();
                 if (logsRes.ok) cacheLogs = await logsRes.json();
                 if (statsRes.ok) cacheStats = await statsRes.json();
+                if (categoriesRes && categoriesRes.ok) {
+                    const cats = await categoriesRes.json();
+                    cachePositions = cats.positions || [];
+                    cacheJobCategories = cats.jobCategories || [];
+                    cachePermissions = cats.permissions || [];
+                }
 
                 // Build frontend layouts based on results
                 renderDashboardMetrics();
@@ -818,6 +955,7 @@
                 renderTasksTimeline();
                 renderProgressLogs();
                 renderPerformanceReports();
+                renderMasterCategories();
                 
                 // Form elements update
                 populateWorkersSelections();
@@ -1232,6 +1370,72 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Dynamic Task-specific Vertical Progress Logs (Timeline) -->
+                    ${(() => {
+                        const taskLogs = cacheLogs.filter(l => l.task_id === task.id || l.taskId === task.id);
+                        if (taskLogs.length === 0) {
+                            return `
+                                <div class="mt-3 pt-3 border-t border-slate-100">
+                                    <p class="text-[10px] text-slate-400 italic">Chưa có nhật ký báo cáo tiến độ nào được đăng tải.</p>
+                                </div>
+                            `;
+                        }
+                        return `
+                            <div class="mt-4 pt-4 border-t border-slate-100">
+                                <h4 class="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1.5 no-print">
+                                    <i data-lucide="history" class="w-3.5 h-3.5 text-indigo-500"></i>
+                                    Nhật lý báo cáo Timeline (${taskLogs.length} lần cập nhật)
+                                </h4>
+                                <div class="relative pl-3 border-l-2 border-slate-150 space-y-3.5 my-2">
+                                    ${taskLogs.map(log => {
+                                        let logStatusBadge = '';
+                                        let dotColor = 'bg-slate-300';
+                                        if (log.status === 'approved') {
+                                            dotColor = log.auto_approved || log.autoApproved ? 'bg-amber-500' : 'bg-emerald-500';
+                                            logStatusBadge = `
+                                                <span class="text-[8px] px-1 py-0.5 bg-emerald-50 text-emerald-700 rounded border border-emerald-100 font-bold uppercase tracking-wider">
+                                                    ${log.auto_approved || log.autoApproved ? 'Hệ thống duyệt' : 'Đã duyệt'}
+                                                </span>`;
+                                        } else if (log.status === 'pending') {
+                                            dotColor = 'bg-amber-400 animate-pulse';
+                                            logStatusBadge = '<span class="text-[8px] px-1 py-0.5 bg-amber-50 text-amber-700 rounded border border-amber-150 font-bold uppercase tracking-wider animate-pulse">Chờ duyệt</span>';
+                                        } else {
+                                            dotColor = 'bg-rose-500';
+                                            logStatusBadge = '<span class="text-[8px] px-1 py-0.5 bg-rose-50 text-rose-700 rounded border border-rose-100 font-bold uppercase tracking-wider">Từ chối</span>';
+                                        }
+
+                                        return `
+                                             <div class="relative group text-xs">
+                                                 <!-- Timeline Dot -->
+                                                 <div class="absolute -left-[19px] top-1 w-2.5 h-2.5 rounded-full ${dotColor} border-2 border-white shadow-xs transition-colors group-hover:scale-125"></div>
+                                                 
+                                                 <div class="bg-slate-50/70 hover:bg-slate-50 p-2.5 rounded-xl border border-slate-150/40 transition-all space-y-1.5">
+                                                     <div class="flex flex-wrap items-center justify-between gap-1.5">
+                                                         <div class="flex items-center gap-1.5 align-middle">
+                                                             <img src="${log.user_avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=250'}" 
+                                                                  class="w-4.5 h-4.5 rounded-full object-cover border border-slate-200" title="${log.user_name}">
+                                                             <span class="font-bold text-slate-800">${log.user_name}</span>
+                                                             <span class="text-[9px] text-slate-400 font-mono">${log.date}</span>
+                                                         </div>
+                                                         <div class="flex items-center gap-1.5">
+                                                             <span class="font-bold text-slate-900">Đạt: ${log.progress_percent || log.progressPercent || 0}%</span>
+                                                             ${logStatusBadge}
+                                                         </div>
+                                                     </div>
+                                                     <p class="text-slate-600 font-normal leading-relaxed text-[11px]">${log.notes}</p>
+                                                     ${log.image ? `
+                                                     <div class="relative max-w-[124px] rounded-lg overflow-hidden border border-slate-150 mt-1 cursor-zoom-in" onclick="zoomImage('${log.image}')">
+                                                         <img src="${log.image}" class="w-full h-14 object-cover hover:scale-105 transition-all">
+                                                     </div>` : ''}
+                                                 </div>
+                                             </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        `;
+                    })()}
                 `;
                 container.appendChild(div);
             });
@@ -1466,28 +1670,196 @@
             });
         }
 
+        // --- PROFILE EDIT CONTROLLERS ---
+        function openProfileModal() {
+            document.getElementById('profile-modal').classList.remove('hidden');
+            
+            // Populate form fields from current user session data
+            document.getElementById('profile-name').value = PHP_CURRENT_USER.name || '';
+            document.getElementById('profile-dob').value = PHP_CURRENT_USER.dob || '';
+            document.getElementById('profile-address').value = PHP_CURRENT_USER.address || '';
+            document.getElementById('profile-ic').value = PHP_CURRENT_USER.identity_card || '';
+            document.getElementById('profile-phone').value = PHP_CURRENT_USER.phone || '';
+            document.getElementById('profile-password').value = ''; // clear password input field
+            document.getElementById('profile-avatar-preview').src = PHP_CURRENT_USER.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150';
+            
+            // Reset base64 variable
+            profileAvatarBase64 = null;
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profile-modal').classList.add('hidden');
+        }
+
+        let profileAvatarBase64 = null;
+
+        function previewProfileAvatar(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    // Create canvas for downscaling (avatar is small, max 160x160 is perfect)
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    const maxDim = 160;
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > height) {
+                        if (width > maxDim) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        }
+                    } else {
+                        if (height > maxDim) {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+                    document.getElementById('profile-avatar-preview').src = compressedBase64;
+                    profileAvatarBase64 = compressedBase64;
+                };
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+
+        async function handleProfileSubmit(event) {
+            event.preventDefault();
+            const btnSubmit = document.getElementById('btn-profile-submit');
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<span>Đang lưu...</span> <div class="animate-spin rounded-full h-3 w-3 border-2 border-white/30 border-t-white inline-block ml-1"></div>';
+
+            const name = document.getElementById('profile-name').value.trim();
+            const dob = document.getElementById('profile-dob').value;
+            const address = document.getElementById('profile-address').value.trim();
+            const identity_card = document.getElementById('profile-ic').value.trim();
+            const phone = document.getElementById('profile-phone').value.trim();
+            const password = document.getElementById('profile-password').value;
+
+            const bodyData = {
+                name,
+                dob,
+                address,
+                identity_card,
+                phone
+            };
+
+            if (password) {
+                bodyData.password = password;
+            }
+
+            if (profileAvatarBase64) {
+                bodyData.avatar = profileAvatarBase64;
+            }
+
+            try {
+                const response = await fetch('<?= base_url('api/users') ?>/' + PHP_CURRENT_USER.id, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bodyData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && (response.status === 200 || response.status === 201)) {
+                    showToast("success", "Cập nhật thành công", "Thông tin hồ sơ cá nhân đã được lưu trữ thành công!");
+                    
+                    const updatedUser = { 
+                        ...PHP_CURRENT_USER, 
+                        ...bodyData, 
+                        ...(profileAvatarBase64 ? { avatar: profileAvatarBase64 } : {}) 
+                    };
+                    
+                    try {
+                        localStorage.setItem('moc_viet_user', JSON.stringify(updatedUser));
+                    } catch (e) {
+                        console.warn("Storage quota exceeded, skipping local storage cache.", e);
+                    }
+                    
+                    closeProfileModal();
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    showToast("alarm", "Thất bại", result.error || "Gặp lỗi trong quá trình lưu hồ sơ.");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("alarm", "Lỗi kết nối", "Không thể liên kết với máy chủ để lưu thông tin.");
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = 'Lưu hồ sơ';
+            }
+        }
+
         function openSubmitLogModal() {
             document.getElementById('submit-log-modal').classList.remove('hidden');
             document.getElementById('submit-log-form').reset();
             document.getElementById('image-upload-preview-container').classList.add('hidden');
             document.getElementById('slider-val-lbl').innerText = '50%';
+            logImageBase64 = null; // Clear old log image
         }
         function closeSubmitLogModal() {
             document.getElementById('submit-log-modal').classList.add('hidden');
         }
 
+        let logImageBase64 = null;
+
         function previewSelectedImage(event) {
             const file = event.target.files[0];
+            if (!file) return;
+
             const reader = new FileReader();
-            reader.onload = function() {
-                const preview = document.getElementById('image-upload-preview');
-                const container = document.getElementById('image-upload-preview-container');
-                preview.src = reader.result;
-                container.classList.remove('hidden');
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    // Create canvas for downscaling progress log image (max 600px width/height is extremely detailed and small)
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    const maxDim = 600;
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > height) {
+                        if (width > maxDim) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        }
+                    } else {
+                        if (height > maxDim) {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.80);
+                    
+                    const preview = document.getElementById('image-upload-preview');
+                    const container = document.getElementById('image-upload-preview-container');
+                    preview.src = compressedBase64;
+                    container.classList.remove('hidden');
+                    
+                    logImageBase64 = compressedBase64;
+                };
+                img.src = e.target.result;
             }
-            if (file) {
-                reader.readAsDataURL(file);
-            }
+            reader.readAsDataURL(file);
         }
 
         async function handleLogSubmit(event) {
@@ -1497,39 +1869,42 @@
             btnSubmit.innerText = "ĐANG TẢI BÁO CÁO MỘC...";
 
             const task_id = document.getElementById('log-task-id').value;
-            const progress_percent = document.getElementById('log-progress-slider').value;
+            const progress_percent = Number(document.getElementById('log-progress-slider').value);
             const date = document.getElementById('log-date').value;
             const notes = document.getElementById('log-notes').value.trim();
-            const imageInput = document.getElementById('log-image');
 
-            // Send via Multipart Form data for php file upload
-            const fd = new FormData();
-            fd.append('task_id', task_id);
-            fd.append('user_id', PHP_CURRENT_USER.id);
-            fd.append('progress_percent', progress_percent);
-            fd.append('date', date);
-            fd.append('notes', notes);
-            if (imageInput.files[0]) {
-                fd.append('image', imageInput.files[0]);
+            const bodyData = {
+                task_id,
+                user_id: PHP_CURRENT_USER.id,
+                progress_percent,
+                date,
+                notes
+            };
+
+            if (logImageBase64) {
+                bodyData.image = logImageBase64;
             }
 
             try {
+                // Send as JSON format so that standard application/json parsed perfectly by Node express server
                 const response = await fetch('<?= base_url('api/logs') ?>', {
                     method: 'POST',
-                    body: fd
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bodyData)
                 });
 
                 const r = await response.json();
 
                 if (response.ok) {
-                    showToast("success", "Nộp thành công", "Sản lượng nhật trình gỗ đã gửi lên máy chủ PHP và đợi duyệt!");
+                    showToast("success", "Nộp thành công", "Sản lượng nhật trình gỗ đã gửi lên máy chủ và được chấp thuận!");
                     closeSubmitLogModal();
                     syncData();
                 } else {
-                    showToast("alarm", "Lỗi dữ liệu", r.messages?.error || "Gửi nhật trình thất bại");
+                    showToast("alarm", "Lỗi dữ liệu", r.error || "Gửi nhật trình thất bại");
                 }
             } catch (err) {
                 console.error(err);
+                showToast("alarm", "Lỗi kết nối", "Không thể gửi dữ liệu nhật trình.");
             } finally {
                 btnSubmit.disabled = false;
                 btnSubmit.innerText = "Nộp nhật trình";
@@ -1670,6 +2045,221 @@
 
         function closeToast() {
             document.getElementById('toast-bin').classList.add('hidden');
+        }
+
+        // ----------------------------------------------------
+        // SYSTEM MASTER CATEGORIES CRUD & MANAGEMENT
+        // ----------------------------------------------------
+        function renderMasterCategories() {
+            // Render Positions
+            const posContainer = document.getElementById('list-positions');
+            if (posContainer) {
+                posContainer.innerHTML = '';
+                if (cachePositions.length === 0) {
+                    posContainer.innerHTML = `<div class="text-slate-400 text-xs italic py-4 text-center">Trống.</div>`;
+                } else {
+                    cachePositions.forEach(pos => {
+                        const isEditable = PHP_CURRENT_USER.role === 'admin' || (PHP_CURRENT_USER.custom_permissions && PHP_CURRENT_USER.custom_permissions.includes('p5'));
+                        const actionButtons = isEditable ? `
+                            <div class="flex gap-1 items-center shrink-0">
+                                <button onclick="openCategoryModal('positions', '${pos.id}')" class="p-1.5 bg-indigo-50 hover:bg-indigo-100 rounded text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer" title="Sửa"><i data-lucide="edit" class="w-3.5 h-3.5"></i></button>
+                                <button onclick="deleteCategory('positions', '${pos.id}')" class="p-1.5 bg-rose-50 hover:bg-rose-100 rounded text-rose-600 hover:text-rose-800 transition-colors cursor-pointer" title="Xóa"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                            </div>
+                        ` : '';
+
+                        const item = document.createElement('div');
+                        item.className = "p-3 bg-slate-50 hover:bg-slate-100/80 border border-slate-150 rounded-xl space-y-1 relative group transition-colors flex justify-between items-center gap-3";
+                        item.innerHTML = `
+                            <div class="space-y-0.5 flex-1 min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <h4 class="font-bold text-slate-800 text-xs truncate">${pos.name}</h4>
+                                    <span class="text-[9px] font-mono text-slate-400 bg-slate-200/50 px-1 rounded shrink-0">${pos.id}</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500 leading-relaxed truncate-2-lines">${pos.description || 'Không có mô tả.'}</p>
+                            </div>
+                            ${actionButtons}
+                        `;
+                        posContainer.appendChild(item);
+                    });
+                }
+            }
+
+            // Render Job Categories
+            const jobsContainer = document.getElementById('list-job-categories');
+            if (jobsContainer) {
+                jobsContainer.innerHTML = '';
+                if (cacheJobCategories.length === 0) {
+                    jobsContainer.innerHTML = `<div class="text-slate-400 text-xs italic py-4 text-center">Trống.</div>`;
+                } else {
+                    cacheJobCategories.forEach(job => {
+                        const isEditable = PHP_CURRENT_USER.role === 'admin' || (PHP_CURRENT_USER.custom_permissions && PHP_CURRENT_USER.custom_permissions.includes('p5'));
+                        const actionButtons = isEditable ? `
+                            <div class="flex gap-1 items-center shrink-0">
+                                <button onclick="openCategoryModal('jobs', '${job.id}')" class="p-1.5 bg-blue-50 hover:bg-blue-100 rounded text-blue-600 hover:text-blue-800 transition-colors cursor-pointer" title="Sửa"><i data-lucide="edit" class="w-3.5 h-3.5"></i></button>
+                                <button onclick="deleteCategory('jobs', '${job.id}')" class="p-1.5 bg-rose-50 hover:bg-rose-100 rounded text-rose-600 hover:text-rose-800 transition-colors cursor-pointer" title="Xóa"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                            </div>
+                        ` : '';
+
+                        const item = document.createElement('div');
+                        item.className = "p-3 bg-slate-50 hover:bg-slate-100/80 border border-slate-150 rounded-xl space-y-1 relative group transition-colors flex justify-between items-center gap-3";
+                        item.innerHTML = `
+                            <div class="space-y-0.5 flex-1 min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <h4 class="font-bold text-slate-800 text-xs truncate">${job.name}</h4>
+                                    <span class="text-[9px] font-mono text-slate-400 bg-slate-200/50 px-1 rounded shrink-0">${job.id}</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500 leading-relaxed truncate-2-lines">${job.description || 'Không có mô tả.'}</p>
+                            </div>
+                            ${actionButtons}
+                        `;
+                        jobsContainer.appendChild(item);
+                    });
+                }
+            }
+
+            // Render Permissions
+            const permContainer = document.getElementById('list-permissions');
+            if (permContainer) {
+                permContainer.innerHTML = '';
+                if (cachePermissions.length === 0) {
+                    permContainer.innerHTML = `<div class="text-slate-400 text-xs italic py-4 text-center">Trống.</div>`;
+                } else {
+                    cachePermissions.forEach(perm => {
+                        const isEditable = PHP_CURRENT_USER.role === 'admin' || (PHP_CURRENT_USER.custom_permissions && PHP_CURRENT_USER.custom_permissions.includes('p5'));
+                        const actionButtons = isEditable ? `
+                            <div class="flex gap-1 items-center shrink-0">
+                                <button onclick="openCategoryModal('permissions', '${perm.id}')" class="p-1.5 bg-emerald-50 hover:bg-emerald-100 rounded text-emerald-600 hover:text-emerald-800 transition-colors cursor-pointer" title="Sửa"><i data-lucide="edit" class="w-3.5 h-3.5"></i></button>
+                                <button onclick="deleteCategory('permissions', '${perm.id}')" class="p-1.5 bg-rose-50 hover:bg-rose-100 rounded text-rose-600 hover:text-rose-800 transition-colors cursor-pointer" title="Xóa"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                            </div>
+                        ` : '';
+
+                        const item = document.createElement('div');
+                        item.className = "p-3 bg-slate-50 hover:bg-slate-100/80 border border-slate-150 rounded-xl space-y-1 relative group transition-colors flex justify-between items-center gap-3";
+                        item.innerHTML = `
+                            <div class="space-y-0.5 flex-1 min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <h4 class="font-bold text-slate-800 text-xs truncate">${perm.name}</h4>
+                                    <span class="text-[9px] font-mono text-slate-400 bg-slate-200/50 px-1 rounded shrink-0">${perm.id}</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500 leading-relaxed truncate-2-lines">${perm.description || 'Không có mô tả.'}</p>
+                            </div>
+                            ${actionButtons}
+                        `;
+                        permContainer.appendChild(item);
+                    });
+                }
+            }
+            lucide.createIcons();
+        }
+
+        function openCategoryModal(type, itemId = '') {
+            document.getElementById('category-form').reset();
+            document.getElementById('category-modal').classList.remove('hidden');
+            document.getElementById('category-type').value = type;
+            document.getElementById('category-edit-id').value = itemId;
+            
+            const idFieldWrapper = document.getElementById('category-id-field-wrapper');
+            idFieldWrapper.classList.add('hidden');
+            document.getElementById('category-item-id').required = false;
+
+            let titlePrefix = "Khai báo";
+            if (itemId) {
+                titlePrefix = "Hiệu chỉnh";
+            }
+
+            let typeName = "Danh mục";
+            if (type === 'positions') {
+                typeName = "Chức Danh Vị Trí";
+            } else if (type === 'jobs') {
+                typeName = "Loại Hình Công Việc";
+            } else if (type === 'permissions') {
+                typeName = "Quyền Hệ Thống";
+                idFieldWrapper.classList.remove('hidden');
+                document.getElementById('category-item-id').required = true;
+            }
+
+            document.getElementById('category-modal-title').innerText = `${titlePrefix} ${typeName}`;
+
+            if (itemId) {
+                let item = null;
+                if (type === 'positions') item = cachePositions.find(x => x.id === itemId);
+                else if (type === 'jobs') item = cacheJobCategories.find(x => x.id === itemId);
+                else if (type === 'permissions') item = cachePermissions.find(x => x.id === itemId);
+
+                if (item) {
+                    document.getElementById('category-name').value = item.name || '';
+                    document.getElementById('category-description').value = item.description || '';
+                    document.getElementById('category-item-id').value = item.id || '';
+                }
+            } else {
+                document.getElementById('category-item-id').value = '';
+            }
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('category-modal').classList.add('hidden');
+        }
+
+        async function handleCategorySubmit(event) {
+            event.preventDefault();
+            const type = document.getElementById('category-type').value;
+            const editId = document.getElementById('category-edit-id').value;
+            const name = document.getElementById('category-name').value.trim();
+            const description = document.getElementById('category-description').value.trim();
+            const itemIdInput = document.getElementById('category-item-id').value.trim();
+
+            const payload = { name, description };
+            if (type === 'permissions' && !editId) {
+                payload.id = itemIdInput;
+            }
+
+            let url = `<?= base_url('api/categories') ?>/` + (type === 'jobs' ? 'jobs' : type);
+            let method = "POST";
+
+            if (editId) {
+                method = "PUT";
+                url += '/' + editId;
+            }
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    showToast('success', 'Thành công', 'Lưu thông tin danh mục thành công!');
+                    closeCategoryModal();
+                    syncData();
+                } else {
+                    const err = await res.json();
+                    showToast('danger', 'Lỗi phân phối', err.error || 'Thao tác danh mục thất bại.');
+                }
+            } catch (ex) {
+                console.error(ex);
+                showToast('danger', 'Lỗi đồng bộ', 'Không thể gửi dữ liệu danh mục lên hệ thống.');
+            }
+        }
+
+        async function deleteCategory(type, id) {
+            if (!confirm('Bạn có chắc chắn muốn xóa danh mục này? Thao tác có thể ảnh hưởng đến dữ liệu nhân viên/công việc liên quan.')) return;
+
+            let url = `<?= base_url('api/categories') ?>/` + (type === 'jobs' ? 'jobs' : type) + '/' + id;
+
+            try {
+                const res = await fetch(url, { method: 'DELETE' });
+                if (res.ok) {
+                    showToast('success', 'Thành công', 'Đã xóa danh mục ra khỏi danh sách hệ thống!');
+                    syncData();
+                } else {
+                    const err = await res.json();
+                    showToast('danger', 'Lỗi thao tác', err.error || 'Không thể xóa mục danh mục này.');
+                }
+            } catch (ex) {
+                console.error(ex);
+                showToast('danger', 'Lỗi kết nối', 'Mất đường truyền mạng với server.');
+            }
         }
     </script>
 </body>

@@ -32,38 +32,49 @@ class ProgressLog extends ResourceController
     {
         $model = new DailyProgressLogModel();
 
-        $taskId = $this->request->getPost('task_id');
-        $userId = $this->request->getPost('user_id');
-        $date = $this->request->getPost('date') ?? date('Y-m-d');
-        $notes = $this->request->getPost('notes') ?? '';
-        $progressPercent = $this->request->getPost('progress_percent') ?? 0;
+        // Hỗ trợ cả hai dạng JSON và FormData để tương thích hoàn toàn với Node Express mọc lẫn PHP core backend
+        $input = $this->request->getJSON(true);
+        if (!empty($input)) {
+            $taskId = $input['task_id'] ?? '';
+            $userId = $input['user_id'] ?? '';
+            $date = $input['date'] ?? date('Y-m-d');
+            $notes = $input['notes'] ?? '';
+            $progressPercent = $input['progress_percent'] ?? 0;
+            $imageUrl = $input['image'] ?? 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80';
+        } else {
+            $taskId = $this->request->getPost('task_id');
+            $userId = $this->request->getPost('user_id');
+            $date = $this->request->getPost('date') ?? date('Y-m-d');
+            $notes = $this->request->getPost('notes') ?? '';
+            $progressPercent = $this->request->getPost('progress_percent') ?? 0;
+
+            // Handle Image Upload
+            $imageUrl = 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80'; // Mẫu ảnh gỗ mặc định
+            $imageFile = $this->request->getFile('image');
+
+            if ($imageFile && $imageFile->isValid() && !$imageFile->hasMoved()) {
+                // Xác thực loại file là hình ảnh và thô hóa dung lượng
+                $validated = $this->validate([
+                    'image' => [
+                        'uploaded[image]',
+                        'mime_in[image,image/jpg,image/jpeg,image/png]',
+                        'max_size[image,3072]', // Tối đa 3MB
+                    ],
+                ]);
+
+                if ($validated) {
+                    // Đặt tên ngẫu nhiên bảo mật tránh trùng lặp
+                    $newName = $imageFile->getRandomName();
+                    $imageFile->move(FCPATH . 'uploads/progress_logs', $newName);
+                    $imageUrl = base_url() . '/uploads/progress_logs/' . $newName;
+                } else {
+                    return $this->fail('File tải lên không hợp lệ, chỉ hỗ trợ JPG/PNG dưới 3MB', 400);
+                }
+            }
+        }
 
         if (empty($taskId) || empty($userId)) {
             return $this->fail('Vui lòng chọn công việc và xác định nhân sự báo cáo', 400);
-        }
-
-        // Handle Image Upload
-        $imageUrl = 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80'; // Mẫu ảnh gỗ mặc định
-        $imageFile = $this->request->getFile('image');
-
-        if ($imageFile && $imageFile->isValid() && !$imageFile->hasMoved()) {
-            // Xác thực loại file là hình ảnh và thô hóa dung lượng
-            $validated = $this->validate([
-                'image' => [
-                    'uploaded[image]',
-                    'mime_in[image,image/jpg,image/jpeg,image/png]',
-                    'max_size[image,3072]', // Tối đa 3MB
-                ],
-            ]);
-
-            if ($validated) {
-                // Đặt tên ngẫu nhiên bảo mật tránh trùng lặp
-                $newName = $imageFile->getRandomName();
-                $imageFile->move(FCPATH . 'uploads/progress_logs', $newName);
-                $imageUrl = base_url() . '/uploads/progress_logs/' . $newName;
-            } else {
-                return $this->fail('File tải lên không hợp lệ, chỉ hỗ trợ JPG/PNG dưới 3MB', 400);
-            }
         }
 
         $data = [

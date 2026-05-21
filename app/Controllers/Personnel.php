@@ -88,12 +88,15 @@ class Personnel extends ResourceController
             return $this->failNotFound('Không tìm thấy ID nhân sự');
         }
 
-        $input = $this->request->getRawInput();
+        $input = $this->request->getJSON(true);
+        if (empty($input)) {
+            $input = $this->request->getRawInput();
+        }
 
         $data = [
             'name' => $input['name'] ?? $user['name'],
             'phone' => $input['phone'] ?? $user['phone'],
-            'username' => $input['username'] ?? $user['username'],
+            'username' => $input['username'] ?? ($user['username'] ?? ''),
             'dob' => $input['dob'] ?? $user['dob'],
             'address' => $input['address'] ?? $user['address'],
             'identity_card' => $input['identity_card'] ?? $user['identity_card'],
