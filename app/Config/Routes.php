@@ -56,4 +56,18 @@ $routes->group('api', function($routes) {
 
     // 5. Reporting and Charts (Tổng hợp biểu đồ, Bảng xếp hạng nảng suất)
     $routes->get('dashboard/stats', 'Report::getPerformanceSummary');
+
+    // 6. Category Management (Danh mục Chức vụ, Loại việc, Quyền hạn)
+    $routes->get('categories', 'Category::index');
+    $routes->post('categories/positions', 'Category::createPosition');
+    $routes->put('categories/positions/(:segment)', 'Category::updatePosition/$1');
+    $routes->delete('categories/positions/(:segment)', 'Category::deletePosition/$1');
+
+    $routes->post('categories/jobs', 'Category::createJobCategory');
+    $routes->put('categories/jobs/(:segment)', 'Category::updateJobCategory/$1');
+    $routes->delete('categories/jobs/(:segment)', 'Category::deleteJobCategory/$1');
+
+    $routes->post('categories/permissions', 'Category::createPermission');
+    $routes->put('categories/permissions/(:segment)', 'Category::updatePermission/$1');
+    $routes->delete('categories/permissions/(:segment)', 'Category::deletePermission/$1');
 });
