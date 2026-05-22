@@ -9,20 +9,62 @@ class Task extends ResourceController
 {
     protected $format = 'json';
 
+    private function getCurrentUser(): ?array
+    {
+        return session()->get('user');
+    }
+
+    private function canViewAllTasks(array $user): bool
+    {
+        return ($user['role'] ?? null) === 'admin';
+    }
+
+    private function isTaskAssignedToUser(array $task, string $userId): bool
+    {
+        foreach ($task['assigned_users'] ?? [] as $assignee) {
+            if (($assignee['id'] ?? null) === $userId) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function index()
     {
+        $currentUser = $this->getCurrentUser();
+        if (!$currentUser) {
+            return $this->failUnauthorized('Vui lòng đăng nhập lại');
+        }
+
         $model = new TaskModel();
         // Lấy chi tiết công việc kèm theo danh sách nhân viên được giao
         $tasks = $model->getDetailedTask();
+
+        if (!$this->canViewAllTasks($currentUser)) {
+            $tasks = array_values(array_filter($tasks, function ($task) use ($currentUser) {
+                return $this->isTaskAssignedToUser($task, (string) ($currentUser['id'] ?? ''));
+            }));
+        }
+
         return $this->respond($tasks);
     }
 
     public function show($id = null)
     {
+        $currentUser = $this->getCurrentUser();
+        if (!$currentUser) {
+            return $this->failUnauthorized('Vui lòng đăng nhập lại');
+        }
+
         $model = new TaskModel();
         $task = $model->getDetailedTask($id);
 
         if (!$task) {
+            return $this->failNotFound('Không tìm thấy đầu mục công việc');
+        }
+
+        if (!$this->canViewAllTasks($currentUser) && !$this->isTaskAssignedToUser($task, (string) ($currentUser['id'] ?? ''))) {
             return $this->failNotFound('Không tìm thấy đầu mục công việc');
         }
 
@@ -32,6 +74,11 @@ class Task extends ResourceController
     public function create()
     {
         $model = new TaskModel();
+        $currentUser = $this->getCurrentUser();
+
+        if (!$currentUser) {
+            return $this->failUnauthorized('Vui lòng đăng nhập lại');
+        }
 
         $taskId = 't_' . uniqid();
         $data = [
@@ -42,7 +89,7 @@ class Task extends ResourceController
             'status' => $this->request->getVar('status') ?? 'pending',
             'start_date' => $this->request->getVar('start_date'),
             'end_date' => $this->request->getVar('end_date'),
-            'created_by' => $this->request->getVar('created_by') ?? 'u1'
+            'created_by' => $currentUser['id'] ?? 'u1'
         ];
 
         if (empty($data['title']) || empty($data['start_date']) || empty($data['end_date'])) {
@@ -70,6 +117,12 @@ class Task extends ResourceController
     public function update($id = null)
     {
         $model = new TaskModel();
+        $currentUser = $this->getCurrentUser();
+
+        if (!$currentUser) {
+            return $this->failUnauthorized('Vui lòng đăng nhập lại');
+        }
+
         $task = $model->find($id);
 
         if (!$task) {
@@ -107,6 +160,12 @@ class Task extends ResourceController
     public function delete($id = null)
     {
         $model = new TaskModel();
+        $currentUser = $this->getCurrentUser();
+
+        if (!$currentUser) {
+            return $this->failUnauthorized('Vui lòng đăng nhập lại');
+        }
+
         $task = $model->find($id);
 
         if (!$task) {
