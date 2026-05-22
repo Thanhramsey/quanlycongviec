@@ -94,7 +94,7 @@
             </form>
 
             <!-- Guide and credentials -->
-            <div class="mt-6 pt-5 border-t border-slate-100">
+            <!-- <div class="mt-6 pt-5 border-t border-slate-100">
                 <p class="text-[10px] text-slate-400 text-center leading-relaxed">
                     Tài khoản thử nghiệm nhanh:<br>
                     Quản trị viên: <strong class="text-slate-600">admin / 123</strong><br>
@@ -102,7 +102,7 @@
                     Nhân viên: <strong class="text-slate-600">0911111111 / 123</strong> (hoặc <strong
                         class="text-slate-600">staff_phuc / 123</strong>)
                 </p>
-            </div>
+            </div> -->
         </div>
     </div>
 

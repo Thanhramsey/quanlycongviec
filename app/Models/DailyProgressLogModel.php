@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Libraries\AutoApproveSetting;
 use CodeIgniter\Model;
 
 class DailyProgressLogModel extends Model
@@ -22,12 +23,17 @@ class DailyProgressLogModel extends Model
      */
     public function autoApproveOldLogs(): int
     {
+        if (!(new AutoApproveSetting())->isEnabled()) {
+            return 0;
+        }
+
         $thresholdDateTime = date('Y-m-d H:i:s', strtotime('-48 hours'));
+        $escapedThreshold = $this->db->escape($thresholdDateTime);
 
         // Ví dụ: log ngày 2026-05-20 chỉ auto-approve sau 2026-05-22 23:59:59
         $this->db->table($this->table)
             ->where('status', 'pending')
-            ->where("STR_TO_DATE(CONCAT(`date`, ' 23:59:59'), '%Y-%m-%d %H:%i:%s') <=", $thresholdDateTime, false)
+            ->where("STR_TO_DATE(CONCAT(`date`, ' 23:59:59'), '%Y-%m-%d %H:%i:%s') <= {$escapedThreshold}", null, false)
             ->update([
                 'status' => 'approved',
                 'auto_approved' => 1,

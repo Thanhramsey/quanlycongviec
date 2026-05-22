@@ -88,7 +88,7 @@
                 <!-- Clock Indicator -->
                 <div class="hidden md:flex items-center gap-1.5 text-xs text-indigo-100 font-mono">
                     <i data-lucide="clock" class="w-4 h-4 text-indigo-200"></i>
-                    <span>Hôm nay: <strong>2026-05-21</strong> (Mũi Giờ Việt Nam)</span>
+                    <span>Hôm nay: <strong id="header-current-datetime">--</strong> (Mũi Giờ Việt Nam)</span>
                 </div>
 
                 <!-- Account Badge -->
@@ -155,7 +155,7 @@
                 <button onclick="switchTab('tasks')" id="tab-btn-tasks"
                     class="tab-btn w-full text-xs font-bold px-4 py-3 rounded-xl flex items-center gap-3 transition-all cursor-pointer text-slate-600 hover:text-slate-900 hover:bg-slate-50">
                     <i data-lucide="clipboard-list" class="w-4 h-4 text-slate-400"></i>
-                    <span>Phân Giao & Timeline</span>
+                    <span>Quản lý công việc</span>
                 </button>
                 <?php endif; ?>
 
@@ -176,14 +176,22 @@
 
             <div
                 class="absolute bottom-6 left-6 right-6 p-4 bg-slate-50 border border-slate-150 rounded-xl space-y-2 text-[10px] text-slate-400">
-                <div class="flex gap-1.5 items-center">
-                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-indigo-600"></i>
-                    <span class="font-semibold text-slate-700">Tự động duyệt bật</span>
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex gap-1.5 items-center min-w-0">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-indigo-600"></i>
+                        <span class="font-semibold text-slate-700" id="auto-approve-status-text">Tự động duyệt đang bật</span>
+                    </div>
+                    <button type="button" id="auto-approve-toggle" onclick="handleAutoApproveToggle()"
+                        class="relative inline-flex h-7 w-14 shrink-0 items-center rounded-full bg-emerald-500 transition-colors duration-200 cursor-pointer">
+                        <span id="auto-approve-toggle-knob"
+                            class="inline-block h-5 w-5 translate-x-8 rounded-full bg-white shadow-sm transition-transform duration-200"></span>
+                    </button>
                 </div>
-                <p class="leading-normal">
+                <p class="leading-normal" id="auto-approve-description">
                     Mọi báo cáo công việc ghi nhận ngày cũ chưa duyệt sẽ tự động chuyển trạng thái "Approved" để đảm bảo
                     dữ liệu theo dõi.
                 </p>
+                <p class="leading-normal text-[9px] text-slate-400" id="auto-approve-hint"></p>
             </div>
         </aside>
 
@@ -224,7 +232,7 @@
                         <button onclick="switchTab('tasks')"
                             class="w-full text-xs font-bold p-3 rounded-lg flex items-center gap-2.5 hover:bg-slate-50 text-slate-600">
                             <i data-lucide="clipboard-list" class="w-4 h-4"></i>
-                            <span>Phân Giao & Timeline</span>
+                            <span>Quản lý công việc</span>
                         </button>
                         <?php endif; ?>
                         <button onclick="switchTab('logs')"
@@ -270,44 +278,60 @@
                 </div>
 
                 <!-- Numerical KPI Grid -->
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                    <div class="p-5 bg-white border border-slate-200/80 rounded-2xl shadow-sm flex items-center gap-3">
-                        <div class="p-3 bg-indigo-50 rounded-xl text-indigo-600"><i data-lucide="users"
+                <div class="grid grid-cols-2 xl:grid-cols-5 gap-4 sm:gap-6">
+                    <div onclick="navigateFromKpi('staff')"
+                        class="p-5 bg-gradient-to-br from-indigo-50 via-white to-indigo-100/70 border border-indigo-200/70 rounded-2xl shadow-sm flex items-center gap-3 cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all">
+                        <div class="p-3 bg-indigo-100 rounded-xl text-indigo-700 shadow-sm"><i data-lucide="users"
                                 class="w-5 h-5"></i></div>
                         <div>
                             <span
-                                class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Nhân
+                                class="block text-[10px] font-bold text-indigo-400 uppercase tracking-widest leading-none mb-1">Nhân
                                 sự</span>
                             <span class="text-2xl font-extrabold text-slate-900 leading-none" id="kpi-staff">...</span>
                         </div>
                     </div>
-                    <div class="p-5 bg-white border border-slate-200/80 rounded-2xl shadow-sm flex items-center gap-3">
-                        <div class="p-3 bg-amber-50 rounded-xl text-amber-600"><i data-lucide="briefcase"
+                    <div onclick="navigateFromKpi('tasks')"
+                        class="p-5 bg-gradient-to-br from-amber-50 via-white to-orange-100/70 border border-amber-200/70 rounded-2xl shadow-sm flex items-center gap-3 cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all">
+                        <div class="p-3 bg-amber-100 rounded-xl text-amber-700 shadow-sm"><i data-lucide="briefcase"
                                 class="w-5 h-5"></i></div>
                         <div>
                             <span
-                                class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Công
+                                class="block text-[10px] font-bold text-amber-500 uppercase tracking-widest leading-none mb-1">Công
                                 việc</span>
                             <span class="text-2xl font-extrabold text-slate-900 leading-none" id="kpi-tasks">...</span>
                         </div>
                     </div>
-                    <div class="p-5 bg-white border border-slate-200/80 rounded-2xl shadow-sm flex items-center gap-3">
-                        <div class="p-3 bg-blue-50 rounded-xl text-blue-600"><i data-lucide="hourglass"
+                    <div onclick="navigateFromKpi('tasks', 'pending')"
+                        class="p-5 bg-gradient-to-br from-rose-50 via-white to-slate-100 border border-rose-200/70 rounded-2xl shadow-sm flex items-center gap-3 cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all">
+                        <div class="p-3 bg-rose-100 rounded-xl text-rose-700 shadow-sm"><i data-lucide="clock-3"
                                 class="w-5 h-5"></i></div>
                         <div>
                             <span
-                                class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Đang
+                                class="block text-[10px] font-bold text-rose-400 uppercase tracking-widest leading-none mb-1">Chưa
+                                bắt đầu</span>
+                            <span class="text-2xl font-extrabold text-slate-900 leading-none"
+                                id="kpi-pending-tasks">...</span>
+                        </div>
+                    </div>
+                    <div onclick="navigateFromKpi('tasks', 'in_progress')"
+                        class="p-5 bg-gradient-to-br from-sky-50 via-white to-blue-100/80 border border-sky-200/70 rounded-2xl shadow-sm flex items-center gap-3 cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all">
+                        <div class="p-3 bg-sky-100 rounded-xl text-sky-700 shadow-sm"><i data-lucide="hourglass"
+                                class="w-5 h-5"></i></div>
+                        <div>
+                            <span
+                                class="block text-[10px] font-bold text-sky-500 uppercase tracking-widest leading-none mb-1">Đang
                                 xử lý</span>
                             <span class="text-2xl font-extrabold text-slate-900 leading-none"
                                 id="kpi-active-tasks">...</span>
                         </div>
                     </div>
-                    <div class="p-5 bg-white border border-slate-200/80 rounded-2xl shadow-sm flex items-center gap-3">
-                        <div class="p-3 bg-emerald-50 rounded-xl text-emerald-600"><i data-lucide="check-circle"
+                    <div onclick="navigateFromKpi('tasks', 'completed')"
+                        class="p-5 bg-gradient-to-br from-emerald-50 via-white to-green-100/80 border border-emerald-200/70 rounded-2xl shadow-sm flex items-center gap-3 cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all">
+                        <div class="p-3 bg-emerald-100 rounded-xl text-emerald-700 shadow-sm"><i data-lucide="check-circle"
                                 class="w-5 h-5"></i></div>
                         <div>
                             <span
-                                class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Hoàn
+                                class="block text-[10px] font-bold text-emerald-500 uppercase tracking-widest leading-none mb-1">Hoàn
                                 thiện</span>
                             <span class="text-2xl font-extrabold text-slate-900 leading-none"
                                 id="kpi-done-tasks">...</span>
@@ -521,10 +545,10 @@
                 </div>
 
                 <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 space-y-3 no-print">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
                         <div>
                             <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Tìm
-                                theo tên / loại</label>
+                                theo Tên</label>
                             <input id="filter-task-keyword" type="text" oninput="renderTasksTimeline()"
                                 placeholder="Ví dụ: bàn ghế, hành chính..."
                                 class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
@@ -538,6 +562,17 @@
                                 <?php foreach($categories as $cat): ?>
                                 <option value="<?= esc($cat['id']) ?>"><?= esc($cat['name']) ?></option>
                                 <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Trạng
+                                thái</label>
+                            <select id="filter-task-status" onchange="renderTasksTimeline()"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="pending">Chờ bắt đầu</option>
+                                <option value="in_progress">Đang thi công</option>
+                                <option value="completed">Hoàn thành</option>
                             </select>
                         </div>
                         <div>
@@ -1266,11 +1301,11 @@
 
     <footer class="bg-slate-900 text-slate-500 py-6 border-t border-slate-800 text-center text-xs mt-auto no-print">
         <p class="flex items-center justify-center gap-1">
-            Thiết kế bởi hệ thống <span class="font-semibold text-slate-300">Quản Lý Nhân Sự & Công Việc Doanh
+           <span class="font-semibold text-slate-300">Quản Lý Nhân Sự & Công Việc Doanh
                 Nghiệp</span>
         </p>
         <p class="text-[10px] mt-1 text-slate-600 font-mono">
-            Vận Hành Hiệu Quả Trên Nền Tảng Pure CodeIgniter 4 MVC Backend • PHP Core Native
+            VNPT 2026
         </p>
     </footer>
 
@@ -1278,6 +1313,9 @@
     <script>
     // Global Local Storage / Memory State synchronized via PHP
     const PHP_CURRENT_USER = <?= json_encode($currentUser) ?>;
+    const AUTO_APPROVE_ENDPOINT = '<?= base_url('api/settings/auto-approve') ?>';
+    let autoApproveEnabled = <?= json_encode((bool) ($autoApproveEnabled ?? true)) ?>;
+    let autoApproveToggleBusy = false;
 
     // In memory databases updated dynamically
     let cacheStaff = [];
@@ -1317,6 +1355,97 @@
                 allowInput: false
             });
         });
+    }
+
+    function startHeaderClock() {
+        const clockElement = document.getElementById('header-current-datetime');
+        if (!clockElement) return;
+
+        const formatter = new Intl.DateTimeFormat('sv-SE', {
+            timeZone: 'Asia/Ho_Chi_Minh',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+
+        const renderClock = () => {
+            clockElement.textContent = formatter.format(new Date());
+        };
+
+        renderClock();
+        window.setInterval(renderClock, 1000);
+    }
+
+    function canManageAutoApprove() {
+        return ['admin', 'manager'].includes(PHP_CURRENT_USER.role || '');
+    }
+
+    function renderAutoApproveToggle() {
+        const toggle = document.getElementById('auto-approve-toggle');
+        const knob = document.getElementById('auto-approve-toggle-knob');
+        const statusText = document.getElementById('auto-approve-status-text');
+        const description = document.getElementById('auto-approve-description');
+        const hint = document.getElementById('auto-approve-hint');
+        if (!toggle || !knob || !statusText || !description || !hint) return;
+
+        const canManage = canManageAutoApprove();
+        toggle.disabled = autoApproveToggleBusy || !canManage;
+        toggle.setAttribute('aria-pressed', autoApproveEnabled ? 'true' : 'false');
+        toggle.className = `relative inline-flex h-7 w-14 shrink-0 items-center rounded-full transition-colors duration-200 ${autoApproveEnabled ? 'bg-emerald-500' : 'bg-slate-300'} ${toggle.disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`;
+        knob.className = `inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${autoApproveEnabled ? 'translate-x-8' : 'translate-x-1'}`;
+        statusText.textContent = autoApproveEnabled ? 'Tự động duyệt đang bật' : 'Tự động duyệt đang tắt';
+        description.textContent = autoApproveEnabled ?
+            'Mọi báo cáo công việc ghi nhận ngày cũ chưa duyệt sẽ tự động chuyển trạng thái "Approved" để đảm bảo dữ liệu theo dõi.' :
+            'Hệ thống sẽ giữ nguyên các báo cáo chờ duyệt cho đến khi quản lý hoặc quản trị viên duyệt thủ công.';
+        hint.textContent = canManage ?
+            'Gạt công tắc để bật hoặc tắt tính năng tự động duyệt toàn hệ thống.' :
+            'Chỉ quản trị viên hoặc quản lý mới được thay đổi thiết lập này.';
+    }
+
+    async function handleAutoApproveToggle() {
+        if (autoApproveToggleBusy) return;
+
+        if (!canManageAutoApprove()) {
+            showToast('alarm', 'Không có quyền', 'Bạn không có quyền thay đổi thiết lập tự động duyệt.');
+            return;
+        }
+
+        const nextValue = !autoApproveEnabled;
+        autoApproveToggleBusy = true;
+        renderAutoApproveToggle();
+
+        try {
+            const response = await fetch(AUTO_APPROVE_ENDPOINT, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    enabled: nextValue
+                })
+            });
+
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(result.messages?.error || result.message || 'Không thể cập nhật thiết lập tự động duyệt.');
+            }
+
+            autoApproveEnabled = !!result.enabled;
+            showToast(
+                autoApproveEnabled ? 'shield-check' : 'shield-off',
+                'Cập nhật thành công',
+                autoApproveEnabled ? 'Đã bật tự động duyệt báo cáo quá hạn.' : 'Đã tắt tự động duyệt báo cáo quá hạn.'
+            );
+        } catch (error) {
+            showToast('alarm', 'Cập nhật thất bại', error.message || 'Không thể thay đổi trạng thái tự động duyệt lúc này.');
+        } finally {
+            autoApproveToggleBusy = false;
+            renderAutoApproveToggle();
+        }
     }
 
     function setDateFieldValue(fieldId, value) {
@@ -1436,6 +1565,8 @@
 
     // On document ready
     window.addEventListener('DOMContentLoaded', () => {
+        startHeaderClock();
+        renderAutoApproveToggle();
         initDatePickers();
 
         // Pre-load Date Inputs to today
@@ -1523,6 +1654,23 @@
 
         // Quick sync when swapping
         syncData();
+    }
+
+    function navigateFromKpi(tabId, taskStatus = '') {
+        const target = document.getElementById('viewport-' + tabId);
+        if (!target) {
+            showToast('alarm', 'Không thể mở màn hình', 'Bạn không có quyền truy cập mục này.');
+            return;
+        }
+
+        if (tabId === 'tasks') {
+            const taskStatusFilter = document.getElementById('filter-task-status');
+            if (taskStatusFilter) {
+                taskStatusFilter.value = taskStatus || '';
+            }
+        }
+
+        switchTab(tabId);
     }
 
     function toggleMobileMenu() {
@@ -1631,11 +1779,13 @@
         const s = cacheStats.summary;
         const taskSnapshots = cacheTasks.map(task => getTaskProgressSnapshot(task));
         const totalTasks = cacheTasks.length;
+        const pendingTasks = taskSnapshots.filter(item => item.status === 'pending').length;
         const inProgressTasks = taskSnapshots.filter(item => item.status === 'in_progress').length;
         const completedTasks = taskSnapshots.filter(item => item.status === 'completed').length;
 
         document.getElementById('kpi-staff').innerText = s.totalStaff + ' người';
         document.getElementById('kpi-tasks').innerText = totalTasks + ' việc';
+        document.getElementById('kpi-pending-tasks').innerText = pendingTasks + ' việc';
         document.getElementById('kpi-active-tasks').innerText = inProgressTasks + ' việc';
         document.getElementById('kpi-done-tasks').innerText = completedTasks + ' việc';
 
@@ -2011,10 +2161,12 @@
     function getFilteredTasksForTimeline() {
         const keyword = (document.getElementById('filter-task-keyword')?.value || '').toLowerCase().trim();
         const categoryId = (document.getElementById('filter-task-category')?.value || '').trim();
+        const status = (document.getElementById('filter-task-status')?.value || '').trim();
         const fromDate = (document.getElementById('filter-task-from')?.value || '').trim();
         const toDate = (document.getElementById('filter-task-to')?.value || '').trim();
 
         return cacheTasks.filter(task => {
+            const snapshot = getTaskProgressSnapshot(task);
             const title = String(task.title || '').toLowerCase();
             const categoryName = String(task.job_category_name || '').toLowerCase();
             const taskCategoryId = String(task.job_category_id || '');
@@ -2026,6 +2178,10 @@
             }
 
             if (categoryId && taskCategoryId !== categoryId) {
+                return false;
+            }
+
+            if (status && snapshot.status !== status) {
                 return false;
             }
 
@@ -2051,8 +2207,10 @@
     function clearTaskFilters() {
         const keyword = document.getElementById('filter-task-keyword');
         const category = document.getElementById('filter-task-category');
+        const status = document.getElementById('filter-task-status');
         if (keyword) keyword.value = '';
         if (category) category.value = '';
+        if (status) status.value = '';
         setDateFieldValue('filter-task-from', '');
         setDateFieldValue('filter-task-to', '');
         renderTasksTimeline();

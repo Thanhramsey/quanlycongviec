@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\AutoApproveSetting;
 use App\Models\PositionModel;
 use App\Models\JobCategoryModel;
 
@@ -23,7 +24,8 @@ class Home extends BaseController
         $data = [
             'currentUser' => $user,
             'positions' => $positionModel->findAll(),
-            'categories' => $jobCategoryModel->findAll()
+            'categories' => $jobCategoryModel->findAll(),
+            'autoApproveEnabled' => (new AutoApproveSetting())->isEnabled(),
         ];
 
         return view('dashboard', $data);

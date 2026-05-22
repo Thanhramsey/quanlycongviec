@@ -57,6 +57,8 @@ $routes->group('api', function($routes) {
     // 5. Reporting and Charts (Tổng hợp biểu đồ, Bảng xếp hạng nảng suất)
     $routes->get('dashboard/stats', 'Report::getPerformanceSummary');
     $routes->get('dashboard/export-excel', 'Report::exportExcel');
+    $routes->get('settings/auto-approve', 'AutoApproveSettingController::index');
+    $routes->put('settings/auto-approve', 'AutoApproveSettingController::update');
 
     // 6. Category Management (Danh mục Chức vụ, Loại việc, Quyền hạn)
     $routes->get('categories', 'Category::index');
