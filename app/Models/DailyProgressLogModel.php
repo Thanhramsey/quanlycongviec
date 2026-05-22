@@ -18,22 +18,24 @@ class DailyProgressLogModel extends Model
 
     /**
      * Tự động duyệt các báo cáo ngày cũ của thợ mộc nếu chưa được duyệt
-     * Quy luật: Nếu ngày báo cáo nhỏ hơn ngày hiện tại (múi giờ hệ thống) và đang chờ duyệt
+     * Quy luật: Chỉ tự duyệt khi đã quá 48 giờ kể từ cuối ngày báo cáo và vẫn đang chờ duyệt
      */
-    public function autoApproveOldLogs()
+    public function autoApproveOldLogs(): int
     {
-        $todayStr = date('Y-m-d'); // Ngày hiện tại
+        $thresholdDateTime = date('Y-m-d H:i:s', strtotime('-48 hours'));
 
-        // Cập nhật tất cả các dòng pending cũ thành approved
+        // Ví dụ: log ngày 2026-05-20 chỉ auto-approve sau 2026-05-22 23:59:59
         $this->db->table($this->table)
-            ->where('date <', $todayStr)
             ->where('status', 'pending')
+            ->where("STR_TO_DATE(CONCAT(`date`, ' 23:59:59'), '%Y-%m-%d %H:%i:%s') <=", $thresholdDateTime, false)
             ->update([
                 'status' => 'approved',
                 'auto_approved' => 1,
                 'approved_at' => date('Y-m-d H:i:s'),
                 'approved_by' => null // Hệ thống tự động phê duyệt
             ]);
+
+        return (int) $this->db->affectedRows();
     }
 
     /**

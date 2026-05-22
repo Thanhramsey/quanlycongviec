@@ -360,17 +360,17 @@
                                 nhanh</h4>
                             <div class="grid grid-cols-2 gap-2">
                                 <button onclick="switchTab('logs')"
-                                    class="p-2.5 bg-slate-50 hover:bg-slate-100/80 transition-all rounded-xl border border-slate-150 text-left cursor-pointer">
-                                    <i data-lucide="file-text" class="w-4 h-4 text-slate-500 mb-1"></i>
-                                    <span class="block text-[11px] font-bold text-slate-800">Cập nhật tiến độ</span>
-                                    <span class="text-[9px] text-slate-400">Xem và nộp ảnh</span>
+                                    class="p-2.5 bg-indigo-50 hover:bg-indigo-100/80 transition-all rounded-xl border border-indigo-200 text-left cursor-pointer">
+                                    <i data-lucide="file-text" class="w-4 h-4 text-indigo-600 mb-1"></i>
+                                    <span class="block text-[11px] font-bold text-indigo-800">Cập nhật tiến độ</span>
+                                    <span class="text-[9px] text-indigo-600/80">Xem và nộp ảnh</span>
                                 </button>
                                 <?php if($currentUser['role'] !== 'staff'): ?>
                                 <button onclick="switchTab('tasks')"
-                                    class="p-2.5 bg-slate-50 hover:bg-slate-100/80 transition-all rounded-xl border border-slate-150 text-left cursor-pointer">
-                                    <i data-lucide="clipboard-list" class="w-4 h-4 text-slate-500 mb-1"></i>
-                                    <span class="block text-[11px] font-bold text-slate-800">Giao việc mới</span>
-                                    <span class="text-[9px] text-slate-400">Chọn nhiều nhân viên</span>
+                                    class="p-2.5 bg-emerald-50 hover:bg-emerald-100/80 transition-all rounded-xl border border-emerald-200 text-left cursor-pointer">
+                                    <i data-lucide="clipboard-list" class="w-4 h-4 text-emerald-600 mb-1"></i>
+                                    <span class="block text-[11px] font-bold text-emerald-800">Giao việc mới</span>
+                                    <span class="text-[9px] text-emerald-700/80">Chọn nhiều nhân viên</span>
                                 </button>
                                 <?php endif; ?>
                             </div>
@@ -1036,6 +1036,9 @@
                         class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
                         <!-- Loaded through staff's associated tasks only -->
                     </select>
+                    <div id="log-task-schedule-hint"
+                        class="mt-2 hidden rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-[11px] text-indigo-700 font-semibold">
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1534,6 +1537,7 @@
     function getTaskProgressSnapshot(task) {
         const assignees = task.assigned_users || [];
         const assigneeIds = assignees.map(u => String(u.id || ''));
+        const backendStatus = String(task.status || 'pending');
 
         const approvedLogs = cacheLogs.filter(l => {
             const sameTask = l.task_id === task.id || l.taskId === task.id;
@@ -1568,17 +1572,55 @@
 
             const sum = assigneeIds.reduce((acc, userId) => acc + Number(latestByUser[userId] || 0), 0);
             progress = Math.round(sum / Math.max(1, assigneeIds.length));
+
+            // Staff view often only contains own logs, so fallback to backend status when coverage is incomplete.
+            const latestUserCount = Object.keys(latestByUser).length;
+            if (latestUserCount < assigneeIds.length) {
+                if (backendStatus === 'completed') {
+                    progress = 100;
+                } else if (backendStatus === 'in_progress') {
+                    progress = Math.max(progress, 1);
+                } else {
+                    progress = 0;
+                }
+            }
         } else if (approvedLogs.length > 0) {
             progress = Math.max(...approvedLogs.map(l => Number(l.progress_percent || l.progressPercent || 0)));
+        } else if (backendStatus === 'completed') {
+            progress = 100;
+        } else if (backendStatus === 'in_progress') {
+            progress = 1;
         }
 
         progress = Math.max(0, Math.min(100, progress));
-        const status = progress >= 100 ? 'completed' : (progress > 0 ? 'in_progress' : 'pending');
+        let status = progress >= 100 ? 'completed' : (progress > 0 ? 'in_progress' : 'pending');
+
+        if (backendStatus === 'completed') {
+            status = 'completed';
+        } else if (backendStatus === 'pending' && status === 'in_progress' && approvedLogs.length === 0) {
+            status = 'pending';
+        }
 
         return {
             progress,
             status
         };
+    }
+
+    function getTaskDeadlineByLog(log) {
+        const rawTaskId = log.task_id ?? log.taskId ?? log.taskID ?? log.task?.id ?? '';
+        const taskId = String(rawTaskId || '').trim();
+        if (!taskId) return '';
+
+        const task = cacheTasks.find(t => String(t.id || '') === taskId);
+        return String(task?.end_date || '').trim();
+    }
+
+    function isLogLate(log) {
+        const logDate = String(log.date || '').trim();
+        const deadline = getTaskDeadlineByLog(log);
+        if (!logDate || !deadline) return false;
+        return logDate > deadline;
     }
 
     // ----------------------------------------------------
@@ -1626,6 +1668,10 @@
 
         let logsHTML = '';
         cacheLogs.slice(0, 5).forEach(log => {
+            const lateBadge = isLogLate(log) ?
+                '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold shrink-0 bg-rose-100 text-rose-700 border border-rose-200">Trễ hạn</span>' :
+                '';
+
             let badgeStyle = "bg-amber-50 text-amber-700";
             let badgeText = "Chờ duyệt";
             if (log.status === "approved") {
@@ -1643,11 +1689,17 @@
                         <div class="flex-1 min-w-0">
                             <div class="flex justify-between items-center">
                                 <span class="font-bold text-slate-800">${log.user_name}</span>
-                                <span class="text-[9px] text-slate-400 font-mono">${log.date}</span>
+                                <span class="inline-flex items-center gap-1 rounded-md border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[9px] text-sky-700 font-bold font-mono">
+                                    <i data-lucide="calendar-days" class="w-3 h-3"></i>
+                                    ${log.date}
+                                </span>
                             </div>
                             <p class="text-slate-500 text-[11px] truncate mt-0.5">Quy cách: <b>${log.task_title}</b> (${log.progress_percent}%) - ${log.notes}</p>
                         </div>
-                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold shrink-0 ${badgeStyle}">${badgeText}</span>
+                        <div class="flex items-center gap-1.5">
+                            ${lateBadge}
+                            <span class="px-1.5 py-0.5 rounded text-[9px] font-bold shrink-0 ${badgeStyle}">${badgeText}</span>
+                        </div>
                     </div>
                 `;
         });
@@ -2279,7 +2331,16 @@
                         <div>
                             <span class="bg-indigo-50 text-indigo-700 border border-indigo-100 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md">${task.job_category_name || 'Công việc chung'}</span>
                             <h3 class="text-sm font-bold text-slate-900 mt-1.5">${task.title}</h3>
-                            <p class="text-[10px] text-slate-400 font-mono mt-0.5">Ngày chạy: ${task.start_date} ~ Hạn định: ${task.end_date}</p>
+                            <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-sky-200 bg-sky-50 text-sky-700 text-[10px] font-bold">
+                                    <i data-lucide="calendar-plus" class="w-3 h-3"></i>
+                                    Giao: ${task.start_date}
+                                </span>
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-rose-200 bg-rose-50 text-rose-700 text-[10px] font-bold">
+                                    <i data-lucide="calendar-clock" class="w-3 h-3"></i>
+                                    Deadline: ${task.end_date}
+                                </span>
+                            </div>
                             ${isManagerView ? `<button onclick="toggleTaskTimeline('${task.id}')" id="timeline-toggle-${task.id}" class="mt-2 px-2.5 py-1 text-[10px] font-bold rounded-lg border border-indigo-100 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-all no-print">Xem chi tiết</button>` : ''}
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0">
@@ -2322,6 +2383,10 @@
                                     </h4>
                                     <div class="relative pl-3 border-l-2 border-slate-150 space-y-3.5 my-2">
                                         ${taskLogs.map(log => {
+                                            const overdueBadge = isLogLate(log) ?
+                                                '<span class="text-[8px] px-1 py-0.5 bg-rose-50 text-rose-700 rounded border border-rose-100 font-bold uppercase tracking-wider">Trễ hạn</span>' :
+                                                '';
+
                                             let logStatusBadge = '';
                                             let dotColor = 'bg-slate-300';
                                             if (log.status === 'approved') {
@@ -2346,9 +2411,13 @@
                                                             <div class="flex items-center gap-1.5 align-middle">
                                                                 <img src="${log.user_avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=250'}" class="w-8 h-8 rounded-full object-cover border border-slate-200" title="${log.user_name}">
                                                                 <span class="font-bold text-slate-800">${log.user_name}</span>
-                                                                <span class="text-[9px] text-slate-400 font-mono">${log.date}</span>
+                                                                <span class="inline-flex items-center gap-1 rounded-md border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[9px] text-sky-700 font-bold font-mono">
+                                                                    <i data-lucide="calendar-days" class="w-3 h-3"></i>
+                                                                    ${log.date}
+                                                                </span>
                                                             </div>
                                                             <div class="flex items-center gap-1.5">
+                                                                ${overdueBadge}
                                                                 <span class="font-bold text-slate-900">Đạt: ${log.progress_percent || log.progressPercent || 0}%</span>
                                                                 ${logStatusBadge}
                                                             </div>
@@ -2632,6 +2701,7 @@
         }
 
         displayLogs.forEach(log => {
+            const isOverdue = isLogLate(log);
             const progressValue = Number(log.progress_percent ?? log.progressPercent ?? 0);
             const clampedProgress = Math.max(0, Math.min(100, progressValue));
             let progressBadgeClass = "bg-rose-50 border-rose-200 text-rose-700 ring-1 ring-rose-100";
@@ -2692,7 +2762,10 @@
                                         <span class="text-[9px] text-slate-400 block">${log.date}</span>
                                     </div>
                                 </div>
-                                <span class="px-2 py-0.5 rounded-md border text-[9px] font-bold uppercase shrink-0 ${statusBadge}">${statusName}</span>
+                                <div class="flex items-center gap-1.5">
+                                    ${isOverdue ? '<span class="px-2 py-0.5 rounded-md border text-[9px] font-bold uppercase shrink-0 bg-rose-100 text-rose-800 border-rose-200">Trễ hạn</span>' : ''}
+                                    <span class="px-2 py-0.5 rounded-md border text-[9px] font-bold uppercase shrink-0 ${statusBadge}">${statusName}</span>
+                                </div>
                             </div>
 
                             <div class="flex flex-wrap items-center justify-between gap-2">
@@ -2740,7 +2813,43 @@
                 `<option value="${task.id}">${task.title} [${task.job_category_name || 'Chung'}]</option>`;
         });
 
-        select.onchange = () => syncLogProgressConstraint(select.value);
+        const updateTaskContext = () => {
+            syncLogProgressConstraint(select.value);
+            renderSelectedTaskScheduleHint(select.value);
+        };
+
+        select.onchange = updateTaskContext;
+
+        if (select.value) {
+            updateTaskContext();
+        }
+    }
+
+    function renderSelectedTaskScheduleHint(taskId) {
+        const hint = document.getElementById('log-task-schedule-hint');
+        if (!hint) return;
+
+        const selectedTask = cacheTasks.find(task => String(task.id || '') === String(taskId || ''));
+        if (!selectedTask) {
+            hint.classList.add('hidden');
+            hint.innerHTML = '';
+            return;
+        }
+
+        hint.innerHTML = `
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-sky-700 bg-white border border-sky-200 rounded-md px-2 py-0.5">
+                    <i data-lucide="calendar-plus" class="w-3 h-3"></i>
+                    Ngày giao: <strong>${selectedTask.start_date || '--'}</strong>
+                </span>
+                <span class="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-rose-700 bg-white border border-rose-200 rounded-md px-2 py-0.5">
+                    <i data-lucide="calendar-clock" class="w-3 h-3"></i>
+                    Hạn: <strong>${selectedTask.end_date || '--'}</strong>
+                </span>
+            </div>
+        `;
+        hint.classList.remove('hidden');
+        lucide.createIcons();
     }
 
     function getLatestOwnProgressForTask(taskId, dateLimit = null) {
@@ -3036,6 +3145,7 @@
         const reevaluateConstraint = () => syncLogProgressConstraint(taskSelect ? taskSelect.value : '');
 
         reevaluateConstraint();
+        renderSelectedTaskScheduleHint(taskSelect ? taskSelect.value : '');
 
         if (dateInput) {
             dateInput.onchange = reevaluateConstraint;
@@ -3305,24 +3415,47 @@
         }
 
         taskProgressList.forEach(task => {
+            let statusText = 'Chờ bắt đầu';
+            let statusClass = 'bg-amber-50 text-amber-700 border-amber-200';
+            let progressBarClass = 'bg-amber-500';
+
+            if (task.status === 'completed') {
+                statusText = 'Hoàn thiện';
+                statusClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                progressBarClass = 'bg-emerald-500';
+            } else if (task.status === 'in_progress') {
+                statusText = 'Đang làm';
+                statusClass = 'bg-indigo-50 text-indigo-700 border-indigo-200';
+                progressBarClass = 'bg-indigo-600';
+            }
+
             const card = document.createElement('div');
             card.className =
-                "space-y-1.5 p-3.5 bg-slate-50 border border-slate-150 rounded-xl hover:bg-slate-100/50 transition-all";
+                "space-y-2 p-3.5 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100/70 transition-all";
             card.innerHTML = `
                     <div class="flex justify-between items-start gap-2">
                         <div>
-                            <span class="text-slate-800 font-bold text-xs">${task.title}</span>
-                            <span class="block text-[9px] text-slate-400 font-mono">${task.startDate} ~ ${task.endDate}</span>
+                            <span class="text-slate-900 font-extrabold text-xs">${task.title}</span>
+                            <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                <span class="inline-flex items-center gap-1 rounded-md border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[9px] font-bold text-sky-700">
+                                    <i data-lucide="calendar-plus" class="w-3 h-3"></i>
+                                    Giao: ${task.startDate}
+                                </span>
+                                <span class="inline-flex items-center gap-1 rounded-md border border-rose-200 bg-rose-50 px-1.5 py-0.5 text-[9px] font-bold text-rose-700">
+                                    <i data-lucide="calendar-clock" class="w-3 h-3"></i>
+                                    Deadline: ${task.endDate}
+                                </span>
+                            </div>
                         </div>
-                        <span class="text-[9px] bg-slate-200 text-slate-800 font-bold uppercase rounded px-1">${task.status === 'completed' ? 'Hoàn thiện' : (task.status === 'in_progress' ? 'Đang làm' : 'Chờ bắt đầu')}</span>
+                        <span class="text-[9px] border font-bold uppercase rounded-md px-1.5 py-0.5 ${statusClass}">${statusText}</span>
                     </div>
                     <div class="space-y-1 pt-1">
                         <div class="flex justify-between text-[9px]">
                             <span class="text-slate-500 font-semibold">Tỷ lệ tiến trình:</span>
                             <span class="font-mono text-slate-900 font-bold">${task.progress}%</span>
                         </div>
-                        <div class="w-full bg-slate-200 rounded-full h-1 overflow-hidden">
-                            <div class="h-full bg-indigo-600 rounded-full" style="width: ${task.progress}%"></div>
+                        <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden border border-slate-200">
+                            <div class="h-full ${progressBarClass} rounded-full" style="width: ${task.progress}%"></div>
                         </div>
                     </div>
                 `;
