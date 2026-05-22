@@ -41,7 +41,21 @@ class ProgressLog extends ResourceController
             ->orderBy('date', 'DESC')
             ->orderBy('id', 'DESC')
             ->get()
-            ->getFirstRowArray();
+            ->getRowArray();
+    }
+
+    private function getSameDayLogForTask(string $taskId, string $userId, string $date): ?array
+    {
+        $db = \Config\Database::connect();
+
+        return $db->table('daily_progress_logs')
+            ->select('*')
+            ->where('task_id', $taskId)
+            ->where('user_id', $userId)
+            ->where('date', $date)
+            ->orderBy('id', 'DESC')
+            ->get()
+            ->getRowArray();
     }
 
     /**
@@ -77,8 +91,16 @@ class ProgressLog extends ResourceController
             return $this->failUnauthorized('Vui lòng đăng nhập lại');
         }
 
-        // Hỗ trợ cả hai dạng JSON và FormData để tương thích hoàn toàn với Node Express mọc lẫn PHP core backend
-        $input = $this->request->getJSON(true);
+        // Hỗ trợ cả hai dạng JSON và FormData.
+        $input = [];
+        $contentType = strtolower((string) $this->request->getHeaderLine('Content-Type'));
+        if (str_contains($contentType, 'application/json')) {
+            try {
+                $input = $this->request->getJSON(true) ?? [];
+            } catch (\Throwable $e) {
+                $input = [];
+            }
+        }
         if (!empty($input)) {
             $taskId = $input['task_id'] ?? '';
             $date = $input['date'] ?? date('Y-m-d');
@@ -91,27 +113,40 @@ class ProgressLog extends ResourceController
             $notes = $this->request->getPost('notes') ?? '';
             $progressPercent = $this->request->getPost('progress_percent') ?? 0;
 
-            // Handle Image Upload
-            $imageUrl = 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80'; // Mẫu ảnh gỗ mặc định
-            $imageFile = $this->request->getFile('image');
+            // Handle attachment upload (image/doc/xls/pdf)
+            $imageUrl = 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80';
+            $imageFile = $this->request->getFile('attachment');
+            if (!$imageFile || !$imageFile->isValid()) {
+                $imageFile = $this->request->getFile('image');
+            }
 
             if ($imageFile && $imageFile->isValid() && !$imageFile->hasMoved()) {
-                // Xác thực loại file là hình ảnh và thô hóa dung lượng
+                // Validate allowed file types and max 10MB.
                 $validated = $this->validate([
-                    'image' => [
-                        'uploaded[image]',
-                        'mime_in[image,image/jpg,image/jpeg,image/png]',
-                        'max_size[image,3072]', // Tối đa 3MB
+                    'attachment' => [
+                        'uploaded[attachment]',
+                        'mime_in[attachment,image/jpg,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet]',
+                        'max_size[attachment,10240]',
                     ],
                 ]);
 
+                if (!$validated) {
+                    // Retry validation with legacy field name.
+                    $validated = $this->validate([
+                        'image' => [
+                            'uploaded[image]',
+                            'mime_in[image,image/jpg,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet]',
+                            'max_size[image,10240]',
+                        ],
+                    ]);
+                }
+
                 if ($validated) {
-                    // Đặt tên ngẫu nhiên bảo mật tránh trùng lặp
                     $newName = $imageFile->getRandomName();
                     $imageFile->move(FCPATH . 'uploads/progress_logs', $newName);
                     $imageUrl = base_url() . '/uploads/progress_logs/' . $newName;
                 } else {
-                    return $this->fail('File tải lên không hợp lệ, chỉ hỗ trợ JPG/PNG dưới 3MB', 400);
+                    return $this->fail('File tải lên không hợp lệ. Hỗ trợ JPG/PNG/PDF/DOC/DOCX/XLS/XLSX, tối đa 10MB', 400);
                 }
             }
         }
@@ -145,7 +180,28 @@ class ProgressLog extends ResourceController
             'auto_approved' => 0
         ];
 
+        $sameDayLog = $this->getSameDayLogForTask($taskId, $userId, $date);
+        if ($sameDayLog) {
+            $updateData = $data;
+            $updateData['approved_by'] = null;
+            $updateData['approved_at'] = null;
+
+            if ($model->update((int) $sameDayLog['id'], $updateData)) {
+                $this->updateTaskOverallStatus($taskId);
+                $log = $model->find((int) $sameDayLog['id']);
+
+                return $this->respond([
+                    'status' => 'success',
+                    'message' => 'Đã cập nhật báo cáo trong cùng ngày cho công việc này',
+                    'log' => $log
+                ]);
+            }
+
+            return $this->fail('Không thể cập nhật báo cáo trùng ngày');
+        }
+
         if ($model->insert($data)) {
+            $this->updateTaskOverallStatus($taskId);
             $insertedId = $model->getInsertID();
             $log = $model->find($insertedId);
             return $this->respondCreated([
@@ -170,7 +226,14 @@ class ProgressLog extends ResourceController
             return $this->failNotFound('Không tìm thấy nhật ký tương ứng');
         }
 
-        $input = $this->request->getRawInput();
+        $input = $this->request->getJSON(true);
+        if (!is_array($input) || empty($input)) {
+            $input = $this->request->getRawInput();
+        }
+        if (!is_array($input) || empty($input)) {
+            $input = $this->request->getVar() ?? [];
+        }
+
         $status = $input['status'] ?? 'approved'; // approved hoặc rejected
         $approvedBy = $input['approved_by'] ?? 'u1'; // ID của quản lý/admin
 
@@ -188,7 +251,7 @@ class ProgressLog extends ResourceController
         if ($model->update($id, $updateData)) {
             // Cập nhật mức độ hoàn thành cao nhất của công việc nếu log được duyệt
             if ($status === 'approved') {
-                $this->updateTaskOverallStatus($log['task_id'], $log['progress_percent']);
+                $this->updateTaskOverallStatus($log['task_id']);
             }
 
             return $this->respond([
@@ -204,12 +267,55 @@ class ProgressLog extends ResourceController
     /**
      * Cập nhật trạng thái tổng thể của Task dựa trên tiến độ % được duyệt cao nhất
      */
-    private function updateTaskOverallStatus($taskId, $progressPercent)
+    private function updateTaskOverallStatus(string $taskId): void
     {
         $db = \Config\Database::connect();
-        
-        $newStatus = 'in_progress';
-        if ($progressPercent >= 100) {
+
+        $assignedRows = $db->table('task_assignments')
+            ->select('user_id')
+            ->where('task_id', $taskId)
+            ->get()
+            ->getResultArray();
+
+        if (empty($assignedRows)) {
+            $db->table('tasks')->where('id', $taskId)->update(['status' => 'pending']);
+            return;
+        }
+
+        $assignedUserIds = array_map(static fn($row) => (string) ($row['user_id'] ?? ''), $assignedRows);
+        $logs = $db->table('daily_progress_logs')
+            ->select('user_id, progress_percent, date, id')
+            ->where('task_id', $taskId)
+            ->where('status', 'approved')
+            ->whereIn('user_id', $assignedUserIds)
+            ->orderBy('user_id', 'ASC')
+            ->orderBy('date', 'DESC')
+            ->orderBy('id', 'DESC')
+            ->get()
+            ->getResultArray();
+
+        $latestProgressByUser = [];
+        foreach ($logs as $log) {
+            $userId = (string) ($log['user_id'] ?? '');
+            if ($userId === '' || array_key_exists($userId, $latestProgressByUser)) {
+                continue;
+            }
+
+            $latestProgressByUser[$userId] = (int) ($log['progress_percent'] ?? 0);
+        }
+
+        $sum = 0;
+        foreach ($assignedUserIds as $userId) {
+            $sum += (int) ($latestProgressByUser[$userId] ?? 0);
+        }
+
+        $averageProgress = $sum / max(1, count($assignedUserIds));
+
+        $newStatus = 'pending';
+        if ($averageProgress > 0) {
+            $newStatus = 'in_progress';
+        }
+        if ($averageProgress >= 100) {
             $newStatus = 'completed';
         }
 

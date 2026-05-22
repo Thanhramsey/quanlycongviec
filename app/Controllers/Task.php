@@ -9,6 +9,66 @@ class Task extends ResourceController
 {
     protected $format = 'json';
 
+    private function getTaskAverageAssignedProgress(string $taskId): float
+    {
+        $db = \Config\Database::connect();
+
+        $assignedRows = $db->table('task_assignments')
+            ->select('user_id')
+            ->where('task_id', $taskId)
+            ->get()
+            ->getResultArray();
+
+        if (empty($assignedRows)) {
+            return 0.0;
+        }
+
+        $assignedUserIds = array_map(static fn($row) => (string) ($row['user_id'] ?? ''), $assignedRows);
+
+        $logs = $db->table('daily_progress_logs')
+            ->select('user_id, progress_percent, date, id')
+            ->where('task_id', $taskId)
+            ->where('status', 'approved')
+            ->whereIn('user_id', $assignedUserIds)
+            ->orderBy('user_id', 'ASC')
+            ->orderBy('date', 'DESC')
+            ->orderBy('id', 'DESC')
+            ->get()
+            ->getResultArray();
+
+        $latestProgressByUser = [];
+        foreach ($logs as $log) {
+            $userId = (string) ($log['user_id'] ?? '');
+            if ($userId === '' || array_key_exists($userId, $latestProgressByUser)) {
+                continue;
+            }
+
+            $latestProgressByUser[$userId] = (int) ($log['progress_percent'] ?? 0);
+        }
+
+        $sum = 0;
+        foreach ($assignedUserIds as $userId) {
+            $sum += (int) ($latestProgressByUser[$userId] ?? 0);
+        }
+
+        return $sum / max(1, count($assignedUserIds));
+    }
+
+    private function resolveTaskStatusFromLogs(string $taskId): string
+    {
+        $averageProgress = $this->getTaskAverageAssignedProgress($taskId);
+
+        if ($averageProgress >= 100) {
+            return 'completed';
+        }
+
+        if ($averageProgress > 0) {
+            return 'in_progress';
+        }
+
+        return 'pending';
+    }
+
     private function getCurrentUser(): ?array
     {
         return session()->get('user');
@@ -80,15 +140,21 @@ class Task extends ResourceController
             return $this->failUnauthorized('Vui lòng đăng nhập lại');
         }
 
+        $input = $this->request->getJSON(true);
+        if (!is_array($input) || empty($input)) {
+            $input = $this->request->getVar() ?? [];
+        }
+
         $taskId = 't_' . uniqid();
         $data = [
             'id' => $taskId,
-            'title' => $this->request->getVar('title'),
-            'description' => $this->request->getVar('description'),
-            'job_category_id' => $this->request->getVar('job_category_id'),
-            'status' => $this->request->getVar('status') ?? 'pending',
-            'start_date' => $this->request->getVar('start_date'),
-            'end_date' => $this->request->getVar('end_date'),
+            'title' => $input['title'] ?? '',
+            'description' => $input['description'] ?? '',
+            'job_category_id' => $input['job_category_id'] ?? null,
+            // New task always starts in pending state.
+            'status' => 'pending',
+            'start_date' => $input['start_date'] ?? '',
+            'end_date' => $input['end_date'] ?? '',
             'created_by' => $currentUser['id'] ?? 'u1'
         ];
 
@@ -98,7 +164,7 @@ class Task extends ResourceController
 
         if ($model->insert($data)) {
             // Giao việc cho nhiều nhân viên (mảng user_ids gửi lên từ client)
-            $assignedUsers = $this->request->getVar('assigned_users') ?? [];
+            $assignedUsers = $input['assigned_users'] ?? [];
             if (!empty($assignedUsers)) {
                 $model->assignStaff($taskId, $assignedUsers);
             }
@@ -129,13 +195,21 @@ class Task extends ResourceController
             return $this->failNotFound('Không tìm thấy công việc tương thích');
         }
 
-        $input = $this->request->getRawInput();
+        // PUT requests from dashboard send JSON body, so read JSON first.
+        $input = $this->request->getJSON(true);
+        if (!is_array($input) || empty($input)) {
+            $input = $this->request->getRawInput();
+        }
+        if (!is_array($input) || empty($input)) {
+            $input = $this->request->getVar() ?? [];
+        }
 
         $data = [
             'title' => $input['title'] ?? $task['title'],
             'description' => $input['description'] ?? $task['description'],
             'job_category_id' => $input['job_category_id'] ?? $task['job_category_id'],
-            'status' => $input['status'] ?? $task['status'],
+            // Status is derived from submitted progress, not manual form selection.
+            'status' => $this->resolveTaskStatusFromLogs((string) $id),
             'start_date' => $input['start_date'] ?? $task['start_date'],
             'end_date' => $input['end_date'] ?? $task['end_date'],
         ];

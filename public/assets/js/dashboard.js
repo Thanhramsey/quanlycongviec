@@ -64,6 +64,7 @@ async function syncData() {
     // Form elements update
     populateWorkersSelections();
     populateWorkerTaskSelect();
+    populateLogTaskFilterOptions();
   } catch (err) {
     console.error("Database connection snapped: ", err);
     showToast(
@@ -116,6 +117,174 @@ function toggleMobileMenu() {
   } else {
     drawer.classList.add("hidden");
   }
+}
+
+function getAppBaseUrl() {
+  const apiLogsUrl = String(DASHBOARD_CONFIG?.api?.logs || "").trim();
+  if (!apiLogsUrl) {
+    return window.location.origin;
+  }
+
+  return apiLogsUrl.replace(/\/api\/logs(?:\/.*)?$/i, "");
+}
+
+function normalizeAttachmentUrl(rawUrl) {
+  const url = String(rawUrl || "").trim();
+  if (!url) return "";
+
+  if (/^data:/i.test(url) || /^https?:\/\//i.test(url)) {
+    try {
+      const parsed = new URL(url);
+      const appBase = getAppBaseUrl();
+      const appBaseParsed = new URL(appBase, window.location.origin);
+
+      // Fix URLs accidentally built at host root like /uploads/... when app is in subfolder.
+      if (
+        parsed.origin === appBaseParsed.origin &&
+        /^\/uploads\//i.test(parsed.pathname) &&
+        /\/public$/i.test(appBaseParsed.pathname)
+      ) {
+        return `${appBaseParsed.origin}${appBaseParsed.pathname}${parsed.pathname}${parsed.search}${parsed.hash}`;
+      }
+    } catch (_) {
+      // Keep original URL when parsing fails.
+    }
+    return url;
+  }
+
+  const appBase = getAppBaseUrl();
+  if (/^\/uploads\//i.test(url)) {
+    return `${appBase}${url}`;
+  }
+
+  if (/^uploads\//i.test(url)) {
+    return `${appBase}/${url}`;
+  }
+
+  if (/^\/public\/uploads\//i.test(url)) {
+    return `${appBase}${url.replace(/^\/public/i, "")}`;
+  }
+
+  return `${appBase}/${url.replace(/^\/+/, "")}`;
+}
+
+function resolveAttachmentUrl(log) {
+  const candidates = [
+    log?.image,
+    log?.attachment,
+    log?.attachment_url,
+    log?.file_url,
+    log?.file_path,
+    log?.image_url,
+  ];
+
+  for (const raw of candidates) {
+    const normalized = normalizeAttachmentUrl(raw);
+    if (normalized) return normalized;
+  }
+
+  return "";
+}
+
+function getAttachmentMeta(attachmentUrl, mimeHint = "") {
+  const url = String(attachmentUrl || "").trim();
+  const mime = String(mimeHint || "")
+    .toLowerCase()
+    .trim();
+  if (!url) {
+    return { url: "", ext: "", isImage: false, isDocument: false };
+  }
+
+  const cleanUrl = url.split("?")[0].split("#")[0];
+  const ext = cleanUrl.includes(".")
+    ? cleanUrl.split(".").pop().toLowerCase()
+    : "";
+
+  const imageExt = ["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg"];
+  const documentExt = ["pdf", "doc", "docx", "xls", "xlsx"];
+
+  const isDataImage = url.startsWith("data:image/");
+  const isMimeImage = mime.startsWith("image/");
+  const isMimeDocument = mime.startsWith("application/");
+  const looksLikeImageUrl =
+    /images\.unsplash\.com|imgur\.com|cloudinary|\/uploads\/progress_logs\//i.test(
+      url
+    ) || /[?&](fm|format)=(jpg|jpeg|png|webp|gif)/i.test(url);
+
+  const isDocumentByExt = documentExt.includes(ext);
+  const isImageByExt = imageExt.includes(ext);
+  const isDocument = isDocumentByExt || (isMimeDocument && !isMimeImage);
+  const isImage =
+    isImageByExt ||
+    isDataImage ||
+    isMimeImage ||
+    (!isDocument && looksLikeImageUrl);
+
+  return {
+    url,
+    ext,
+    isImage,
+    isDocument,
+  };
+}
+
+function renderTimelineAttachment(log) {
+  const attachment = getAttachmentMeta(
+    resolveAttachmentUrl(log),
+    log.image_mime || log.mime_type || log.attachment_mime
+  );
+  if (!attachment.url) return "";
+
+  if (attachment.isImage) {
+    return `
+      <a href="${attachment.url}" target="_blank" rel="noopener noreferrer" class="relative block max-w-[124px] rounded-lg overflow-hidden border border-slate-150 mt-1 cursor-zoom-in" title="Mở ảnh minh chứng">
+        <img src="${attachment.url}" class="w-full h-14 object-cover hover:scale-105 transition-all">
+      </a>`;
+  }
+
+  const icon = attachment.ext === "pdf" ? "file-text" : "file-spreadsheet";
+  const extLabel = attachment.ext ? attachment.ext.toUpperCase() : "FILE";
+  return `
+    <a href="${attachment.url}" target="_blank" rel="noopener noreferrer" class="mt-1 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-[10px] font-bold">
+      <i data-lucide="${icon}" class="w-3.5 h-3.5 text-indigo-600"></i>
+      Xem tài liệu (${extLabel})
+    </a>`;
+}
+
+function renderReviewAttachment(log, progressValue) {
+  const attachment = getAttachmentMeta(
+    resolveAttachmentUrl(log),
+    log.image_mime || log.mime_type || log.attachment_mime
+  );
+  const progressBadge = `<div class="absolute bottom-2 left-2 bg-slate-900/85 text-white px-2.5 py-1 rounded-md text-[10px] font-extrabold tracking-wide shadow">${progressValue}% hoàn thiện</div>`;
+
+  if (attachment.url && attachment.isImage) {
+    return `
+      <div class="md:w-56 overflow-hidden bg-slate-100 relative max-h-[160px] md:max-h-none flex items-center justify-center shrink-0 border-b md:border-b-0 md:border-r border-slate-150">
+        <a href="${attachment.url}" target="_blank" rel="noopener noreferrer" class="block w-full h-full">
+          <img src="${attachment.url}" alt="Báo cáo" class="w-full h-full object-cover">
+        </a>
+        ${progressBadge}
+      </div>`;
+  }
+
+  if (attachment.url && attachment.isDocument) {
+    const icon = attachment.ext === "pdf" ? "file-text" : "file-spreadsheet";
+    const extLabel = attachment.ext.toUpperCase();
+    return `
+      <div class="md:w-56 bg-slate-50 relative max-h-[160px] md:max-h-none flex flex-col items-center justify-center shrink-0 border-b md:border-b-0 md:border-r border-slate-150 p-4 text-center gap-2">
+        <i data-lucide="${icon}" class="w-8 h-8 text-indigo-600"></i>
+        <span class="text-[11px] font-bold text-slate-700">Tài liệu ${extLabel}</span>
+        <a href="${attachment.url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-[10px] font-bold text-slate-700">Mở tệp</a>
+        ${progressBadge}
+      </div>`;
+  }
+
+  return `
+    <div class="md:w-56 overflow-hidden bg-slate-100 relative max-h-[160px] md:max-h-none flex items-center justify-center shrink-0 border-b md:border-b-0 md:border-r border-slate-150">
+      <img src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80" alt="Báo cáo" class="w-full h-full object-cover">
+      ${progressBadge}
+    </div>`;
 }
 
 // ----------------------------------------------------
@@ -515,6 +684,52 @@ async function deleteStaff(userId) {
 // ----------------------------------------------------
 // DYNAMIC VIEWPORT 4: TASKS MANAGEMENT & PLANNING
 // ----------------------------------------------------
+function normalizeCategoryName(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+function getTaskCategoryBadgeClass(categoryName) {
+  const normalized = normalizeCategoryName(categoryName);
+
+  if (normalized.includes("ky thuat")) {
+    return "bg-cyan-50 text-cyan-700 border-cyan-200";
+  }
+
+  if (normalized.includes("hanh chinh")) {
+    return "bg-orange-50 text-orange-700 border-orange-200";
+  }
+
+  return "bg-indigo-50 text-indigo-700 border-indigo-100";
+}
+
+function getTaskDerivedStatus(taskId) {
+  const taskLogs = cacheLogs.filter(
+    (l) => l.task_id === taskId || l.taskId === taskId
+  );
+
+  if (taskLogs.length === 0) {
+    return { status: "pending", progress: 0 };
+  }
+
+  const maxProgress = Math.max(
+    ...taskLogs.map((l) => Number(l.progress_percent || l.progressPercent || 0))
+  );
+
+  if (maxProgress >= 100) {
+    return { status: "completed", progress: 100 };
+  }
+
+  if (maxProgress > 0) {
+    return { status: "in_progress", progress: maxProgress };
+  }
+
+  return { status: "pending", progress: 0 };
+}
+
 function renderTasksTimeline() {
   const container = document.getElementById("tasks-timeline-container");
   container.innerHTML = "";
@@ -529,22 +744,20 @@ function renderTasksTimeline() {
   }
 
   cacheTasks.forEach((task) => {
-    // Calculate progress bar level
-    const approvedLogs = cacheLogs.filter(
-      (l) => l.task_id === task.id && l.status === "approved"
+    const derivedState = getTaskDerivedStatus(task.id);
+    const progressVal = derivedState.progress;
+    const taskStatus = derivedState.status;
+    const categoryBadgeClass = getTaskCategoryBadgeClass(
+      task.job_category_name
     );
-    const progressVal =
-      approvedLogs.length === 0
-        ? 0
-        : Math.max(...approvedLogs.map((l) => parseInt(l.progress_percent)));
 
     // Status badging
     let badgeStyle = "bg-amber-50 text-amber-700";
-    let badgeText = "Bắt đầu làm";
-    if (task.status === "completed") {
+    let badgeText = "Chờ bắt đầu";
+    if (taskStatus === "completed") {
       badgeStyle = "bg-emerald-50 text-emerald-700";
       badgeText = "Hoàn thành";
-    } else if (task.status === "in_progress") {
+    } else if (taskStatus === "in_progress") {
       badgeStyle = "bg-indigo-50 text-indigo-700";
       badgeText = "Đang thi công";
     }
@@ -588,7 +801,7 @@ function renderTasksTimeline() {
     div.innerHTML = `
                     <div class="flex justify-between items-start gap-3">
                         <div>
-                            <span class="bg-indigo-50 text-indigo-700 border border-indigo-100 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md">${task.job_category_name || "Công việc chung"}</span>
+                <span class="${categoryBadgeClass} border text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md">${task.job_category_name || "Công việc chung"}</span>
                             <h3 class="text-sm font-bold text-slate-900 mt-1.5">${task.title}</h3>
                             <p class="text-[10px] text-slate-400 font-mono mt-0.5">Ngày chạy: ${task.start_date} ~ Hạn định: ${task.end_date}</p>
                         </div>
@@ -666,7 +879,7 @@ function renderTasksTimeline() {
                                                      <div class="flex flex-wrap items-center justify-between gap-1.5">
                                                          <div class="flex items-center gap-1.5 align-middle">
                                                              <img src="${log.user_avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=250"}" 
-                                                                  class="w-4.5 h-4.5 rounded-full object-cover border border-slate-200" title="${log.user_name}">
+                                                               class="w-8 h-8 rounded-full object-cover border border-slate-200" title="${log.user_name}">
                                                              <span class="font-bold text-slate-800">${log.user_name}</span>
                                                              <span class="text-[9px] text-slate-400 font-mono">${log.date}</span>
                                                          </div>
@@ -676,14 +889,7 @@ function renderTasksTimeline() {
                                                          </div>
                                                      </div>
                                                      <p class="text-slate-600 font-normal leading-relaxed text-[11px]">${log.notes}</p>
-                                                     ${
-                                                       log.image
-                                                         ? `
-                                                     <div class="relative max-w-[124px] rounded-lg overflow-hidden border border-slate-150 mt-1 cursor-zoom-in" onclick="zoomImage('${log.image}')">
-                                                         <img src="${log.image}" class="w-full h-14 object-cover hover:scale-105 transition-all">
-                                                     </div>`
-                                                         : ""
-                                                     }
+                                                     ${renderTimelineAttachment(log)}
                                                  </div>
                                              </div>
                                         `;
@@ -745,7 +951,6 @@ async function handleTaskSubmit(event) {
   const editId = document.getElementById("task-edit-id").value;
   const title = document.getElementById("task-title").value.trim();
   const job_category_id = document.getElementById("task-job-category-id").value;
-  const status = document.getElementById("task-status").value;
   const start_date = document.getElementById("task-start-date").value;
   const end_date = document.getElementById("task-end-date").value;
   const description = document.getElementById("task-description").value.trim();
@@ -758,7 +963,6 @@ async function handleTaskSubmit(event) {
   const bodyData = {
     title,
     job_category_id,
-    status,
     start_date,
     end_date,
     description,
@@ -855,16 +1059,136 @@ async function deleteTask(taskId) {
 // ----------------------------------------------------
 // DYNAMIC VIEWPORT 5: REVIEWS PROGRESS FEED & DISPATCH
 // ----------------------------------------------------
+function populateLogTaskFilterOptions() {
+  const select = document.getElementById("filter-log-task-id");
+  if (!select) return;
+
+  const currentValue = select.value || "";
+  const taskOptions = cacheTasks
+    .slice()
+    .sort((a, b) => String(a.title || "").localeCompare(String(b.title || "")))
+    .map(
+      (task) =>
+        `<option value="${task.id}">${task.title} [${task.job_category_name || "Chung"}]</option>`
+    )
+    .join("");
+
+  select.innerHTML = `<option value="">Tất cả công việc</option>${taskOptions}`;
+  if (
+    currentValue &&
+    cacheTasks.some((t) => String(t.id) === String(currentValue))
+  ) {
+    select.value = currentValue;
+  }
+}
+
+function getFilteredProgressLogs() {
+  const selectedTaskId = (
+    document.getElementById("filter-log-task-id")?.value || ""
+  ).trim();
+  const keyword = (document.getElementById("filter-log-keyword")?.value || "")
+    .toLowerCase()
+    .trim();
+  const categoryId = (
+    document.getElementById("filter-log-category")?.value || ""
+  ).trim();
+  const filterStatus = (
+    document.getElementById("filter-log-status")?.value || ""
+  ).trim();
+  const fromDate = (
+    document.getElementById("filter-log-from")?.value || ""
+  ).trim();
+  const toDate = (document.getElementById("filter-log-to")?.value || "").trim();
+  const selectedTaskIdNormalized = selectedTaskId.toLowerCase();
+  const selectedTask = cacheTasks.find(
+    (t) => String(t.id || "").toLowerCase() === selectedTaskIdNormalized
+  );
+  const selectedTaskTitleNormalized = String(selectedTask?.title || "")
+    .toLowerCase()
+    .trim();
+
+  return cacheLogs.filter((log) => {
+    const logStatus = String(log.status || "");
+    const logDate = String(log.date || "");
+    const rawTaskId =
+      log.task_id ?? log.taskId ?? log.taskID ?? log.task?.id ?? "";
+    const taskId = String(rawTaskId || "").trim();
+    const taskIdNormalized = taskId.toLowerCase();
+    const task = cacheTasks.find((t) => String(t.id) === taskId) || {};
+    const taskCategoryId = String(task.job_category_id || "");
+    const logTaskTitleNormalized = String(log.task_title || "")
+      .toLowerCase()
+      .trim();
+
+    const searchText = [
+      log.user_name,
+      log.task_title,
+      log.notes,
+      task.job_category_name,
+    ]
+      .map((x) => String(x || "").toLowerCase())
+      .join(" ");
+
+    if (selectedTaskId) {
+      const matchedById =
+        taskIdNormalized && taskIdNormalized === selectedTaskIdNormalized;
+      const matchedByTitle =
+        !matchedById &&
+        !!selectedTaskTitleNormalized &&
+        logTaskTitleNormalized === selectedTaskTitleNormalized;
+
+      if (!matchedById && !matchedByTitle) {
+        return false;
+      }
+    }
+
+    if (filterStatus && logStatus !== filterStatus) {
+      return false;
+    }
+
+    if (keyword && !searchText.includes(keyword)) {
+      return false;
+    }
+
+    if (categoryId && taskCategoryId !== categoryId) {
+      return false;
+    }
+
+    if (fromDate && (!logDate || logDate < fromDate)) {
+      return false;
+    }
+
+    if (toDate && (!logDate || logDate > toDate)) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+function clearLogFilters() {
+  const ids = [
+    "filter-log-task-id",
+    "filter-log-keyword",
+    "filter-log-category",
+    "filter-log-status",
+    "filter-log-from",
+    "filter-log-to",
+  ];
+
+  ids.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+
+  renderProgressLogs();
+}
+
 function renderProgressLogs() {
   const container = document.getElementById("logs-feed-container");
   container.innerHTML = "";
 
-  const filterStatus = document.getElementById("filter-log-status").value;
-  let displayLogs = [...cacheLogs];
-
-  if (filterStatus) {
-    displayLogs = displayLogs.filter((l) => l.status === filterStatus);
-  }
+  const displayLogs = getFilteredProgressLogs();
 
   if (displayLogs.length === 0) {
     container.innerHTML = `
@@ -876,6 +1200,28 @@ function renderProgressLogs() {
   }
 
   displayLogs.forEach((log) => {
+    const progressValue = Number(
+      log.progress_percent ?? log.progressPercent ?? 0
+    );
+    const clampedProgress = Math.max(0, Math.min(100, progressValue));
+    let progressBadgeClass =
+      "bg-rose-50 border-rose-200 text-rose-700 ring-1 ring-rose-100";
+    let progressBarClass = "bg-rose-500";
+
+    if (clampedProgress >= 100) {
+      progressBadgeClass =
+        "bg-emerald-50 border-emerald-200 text-emerald-700 ring-1 ring-emerald-100";
+      progressBarClass = "bg-emerald-500";
+    } else if (clampedProgress >= 60) {
+      progressBadgeClass =
+        "bg-blue-50 border-blue-200 text-blue-700 ring-1 ring-blue-100";
+      progressBarClass = "bg-blue-500";
+    } else if (clampedProgress >= 30) {
+      progressBadgeClass =
+        "bg-amber-50 border-amber-200 text-amber-700 ring-1 ring-amber-100";
+      progressBarClass = "bg-amber-500";
+    }
+
     // Status mapping
     let statusBadge = "bg-amber-100 text-amber-800 border-amber-200";
     let statusName = "Chờ duyệt";
@@ -912,10 +1258,7 @@ function renderProgressLogs() {
     card.className =
       "bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm flex flex-col md:flex-row";
     card.innerHTML = `
-                    <div class="md:w-56 overflow-hidden bg-slate-100 relative max-h-[160px] md:max-h-none flex items-center justify-center shrink-0 border-b md:border-b-0 md:border-r border-slate-150">
-                        <img src="${log.image || "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80"}" alt="Báo cáo" class="w-full h-full object-cover">
-                        <div class="absolute bottom-2 left-2 bg-slate-900/80 text-white px-2 py-0.5 rounded text-[9px] font-bold">${log.progress_percent}% hoàn thiện</div>
-                    </div>
+                    ${renderReviewAttachment(log, clampedProgress)}
 
                     <div class="p-5 flex-1 flex flex-col justify-between space-y-3">
                         <div class="space-y-1.5">
@@ -930,7 +1273,16 @@ function renderProgressLogs() {
                                 <span class="px-2 py-0.5 rounded-md border text-[9px] font-bold uppercase shrink-0 ${statusBadge}">${statusName}</span>
                             </div>
 
-                            <p class="text-[11px] font-extrabold text-slate-500">Công việc: <span class="text-slate-800">${log.task_title}</span></p>
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                              <p class="text-[11px] font-extrabold text-slate-500">Công việc: <span class="text-slate-800">${log.task_title}</span></p>
+                              <span class="inline-flex items-center px-2.5 py-1 rounded-md border text-[10px] font-extrabold ${progressBadgeClass}">Tiến độ: ${clampedProgress}%</span>
+                            </div>
+                            <div class="space-y-1">
+                              <div class="w-full h-2 rounded-full bg-slate-100 border border-slate-200 overflow-hidden">
+                                <div class="h-full ${progressBarClass} transition-all duration-300" style="width: ${clampedProgress}%"></div>
+                              </div>
+                              <p class="text-[10px] font-semibold text-slate-500">Mức hoàn thiện hiện tại</p>
+                            </div>
                             <p class="text-xs text-slate-600 leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-150">${log.notes}</p>
                             
                             ${
@@ -992,6 +1344,27 @@ function getLatestOwnProgressForTask(taskId, dateLimit = null) {
   return taskLogs[0] || null;
 }
 
+function setLogProgressFeedback(message = "", tone = "info") {
+  const feedback = document.getElementById("log-progress-feedback");
+  if (!feedback) return;
+
+  if (!message) {
+    feedback.className = "hidden rounded-xl border px-3 py-2 text-[11px]";
+    feedback.textContent = "";
+    return;
+  }
+
+  if (tone === "error") {
+    feedback.className =
+      "rounded-xl border border-rose-200 bg-rose-50 text-rose-700 px-3 py-2 text-[11px]";
+  } else {
+    feedback.className =
+      "rounded-xl border border-amber-200 bg-amber-50 text-amber-700 px-3 py-2 text-[11px]";
+  }
+
+  feedback.textContent = message;
+}
+
 function syncLogProgressConstraint(taskId) {
   const slider = document.getElementById("log-progress-slider");
   const label = document.getElementById("slider-val-lbl");
@@ -1014,6 +1387,17 @@ function syncLogProgressConstraint(taskId) {
   slider.title = latestLog
     ? `Mức tối thiểu cho ngày sau: ${minValue}%`
     : "Mức tối thiểu hiện tại: 0%";
+
+  if (latestLog) {
+    const targetDate =
+      dateInput && dateInput.value ? dateInput.value : "ngày đã chọn";
+    setLogProgressFeedback(
+      `Tiến độ cho ${targetDate} phải >= ${minValue}% (mốc trước: ${latestLog.date}).`,
+      "info"
+    );
+  } else {
+    setLogProgressFeedback("");
+  }
 }
 
 // --- PROFILE EDIT CONTROLLERS ---
@@ -1178,65 +1562,82 @@ function openSubmitLogModal() {
   document
     .getElementById("image-upload-preview-container")
     .classList.add("hidden");
+  const previewImage = document.getElementById("image-upload-preview");
+  const previewName = document.getElementById("file-upload-name");
+  if (previewImage) previewImage.classList.remove("hidden");
+  if (previewName) {
+    previewName.classList.add("hidden");
+    previewName.textContent = "";
+  }
   document.getElementById("slider-val-lbl").innerText = "50%";
   document.getElementById("log-progress-slider").min = "0";
-  syncLogProgressConstraint(document.getElementById("log-task-id").value);
-  document.getElementById("log-date").onchange = () =>
-    syncLogProgressConstraint(document.getElementById("log-task-id").value);
-  logImageBase64 = null; // Clear old log image
+  setLogProgressFeedback("");
+
+  const taskSelect = document.getElementById("log-task-id");
+  const dateInput = document.getElementById("log-date");
+  const slider = document.getElementById("log-progress-slider");
+
+  const reevaluateConstraint = () =>
+    syncLogProgressConstraint(taskSelect ? taskSelect.value : "");
+
+  reevaluateConstraint();
+
+  if (dateInput) {
+    dateInput.onchange = reevaluateConstraint;
+  }
+
+  if (slider) {
+    slider.oninput = () => {
+      document.getElementById("slider-val-lbl").innerText = slider.value + "%";
+      reevaluateConstraint();
+    };
+  }
+
+  logAttachmentFile = null;
 }
 function closeSubmitLogModal() {
   document.getElementById("submit-log-modal").classList.add("hidden");
 }
 
-let logImageBase64 = null;
+let logAttachmentFile = null;
 
 function previewSelectedImage(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const img = new Image();
-    img.onload = function () {
-      // Create canvas for downscaling progress log image (max 600px width/height is extremely detailed and small)
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
+  logAttachmentFile = file;
 
-      const maxDim = 600;
-      let width = img.width;
-      let height = img.height;
+  const preview = document.getElementById("image-upload-preview");
+  const container = document.getElementById("image-upload-preview-container");
+  const fileName = document.getElementById("file-upload-name");
+  if (!container) return;
+  container.classList.remove("hidden");
 
-      if (width > height) {
-        if (width > maxDim) {
-          height = Math.round((height * maxDim) / width);
-          width = maxDim;
-        }
-      } else {
-        if (height > maxDim) {
-          width = Math.round((width * maxDim) / height);
-          height = maxDim;
-        }
+  if (file.type.startsWith("image/")) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      if (preview) {
+        preview.src = e.target.result;
+        preview.classList.remove("hidden");
       }
-
-      canvas.width = width;
-      canvas.height = height;
-      ctx.drawImage(img, 0, 0, width, height);
-
-      const compressedBase64 = canvas.toDataURL("image/jpeg", 0.8);
-
-      const preview = document.getElementById("image-upload-preview");
-      const container = document.getElementById(
-        "image-upload-preview-container"
-      );
-      preview.src = compressedBase64;
-      container.classList.remove("hidden");
-
-      logImageBase64 = compressedBase64;
+      if (fileName) {
+        fileName.classList.add("hidden");
+        fileName.textContent = "";
+      }
     };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
+    return;
+  }
+
+  if (preview) {
+    preview.classList.add("hidden");
+    preview.removeAttribute("src");
+  }
+  if (fileName) {
+    const ext = (file.name.split(".").pop() || "FILE").toUpperCase();
+    fileName.textContent = `Da chon tep: ${file.name} (${ext})`;
+    fileName.classList.remove("hidden");
+  }
 }
 
 async function handleLogSubmit(event) {
@@ -1257,37 +1658,34 @@ async function handleLogSubmit(event) {
     : 0;
 
   if (latestLog && progress_percent < latestProgress) {
-    showToast(
-      "alarm",
-      "Tiến độ không hợp lệ",
-      `Mức hoàn thành ngày sau phải >= ${latestProgress}%.`
+    setLogProgressFeedback(
+      `Tiến độ của ngày sau phải lớn hơn hoặc bằng ngày trước. Mức trước đó là ${latestProgress}%.`,
+      "error"
     );
+    document.getElementById("log-progress-slider").focus();
     btnSubmit.disabled = false;
     btnSubmit.innerText = "Nộp báo cáo";
     return;
   }
 
-  const bodyData = {
-    task_id,
-    user_id: PHP_CURRENT_USER.id,
-    progress_percent,
-    date,
-    notes,
-  };
+  const formData = new FormData();
+  formData.append("task_id", task_id);
+  formData.append("user_id", PHP_CURRENT_USER.id || "");
+  formData.append("progress_percent", String(progress_percent));
+  formData.append("date", date);
+  formData.append("notes", notes);
 
-  if (logImageBase64) {
-    bodyData.image = logImageBase64;
+  if (logAttachmentFile) {
+    formData.append("attachment", logAttachmentFile);
   }
 
   try {
-    // Send as JSON format so that standard application/json parsed perfectly by Node express server
     const response = await fetch(DASHBOARD_CONFIG.api.logs, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(bodyData),
+      body: formData,
     });
 
-    const r = await response.json();
+    const r = await response.json().catch(() => ({}));
 
     if (response.ok) {
       showToast(
@@ -1295,14 +1693,19 @@ async function handleLogSubmit(event) {
         "Nộp thành công",
         "Báo cáo công việc đã gửi lên máy chủ thành công."
       );
+      setLogProgressFeedback("");
       closeSubmitLogModal();
       syncData();
     } else {
-      showToast(
-        "alarm",
-        "Lỗi dữ liệu",
-        r.error || r.message || r.messages?.error || "Gửi báo cáo thất bại"
-      );
+      const backendMessage =
+        r.messages?.error || r.message || r.error || "Gửi báo cáo thất bại";
+      setLogProgressFeedback(String(backendMessage), "error");
+
+      if (String(backendMessage).includes("Tiến độ")) {
+        document.getElementById("log-progress-slider").focus();
+      } else {
+        showToast("alarm", "Lỗi dữ liệu", String(backendMessage));
+      }
     }
   } catch (err) {
     console.error(err);

@@ -11,6 +11,50 @@ class Report extends ResourceController
 {
     protected $format = 'json';
 
+    private function calculateDeltaPoints(array $approvedLogs): int
+    {
+        if (empty($approvedLogs)) {
+            return 0;
+        }
+
+        usort($approvedLogs, static function ($a, $b) {
+            $taskCompare = strcmp((string) ($a['task_id'] ?? ''), (string) ($b['task_id'] ?? ''));
+            if ($taskCompare !== 0) {
+                return $taskCompare;
+            }
+
+            $dateCompare = strcmp((string) ($a['date'] ?? ''), (string) ($b['date'] ?? ''));
+            if ($dateCompare !== 0) {
+                return $dateCompare;
+            }
+
+            return ((int) ($a['id'] ?? 0)) <=> ((int) ($b['id'] ?? 0));
+        });
+
+        $previousByTask = [];
+        $total = 0;
+
+        foreach ($approvedLogs as $log) {
+            $taskId = (string) ($log['task_id'] ?? '');
+            $current = (int) ($log['progress_percent'] ?? 0);
+
+            if ($taskId === '') {
+                continue;
+            }
+
+            if (!array_key_exists($taskId, $previousByTask)) {
+                $delta = max(0, $current);
+            } else {
+                $delta = max(0, $current - (int) $previousByTask[$taskId]);
+            }
+
+            $previousByTask[$taskId] = $current;
+            $total += $delta;
+        }
+
+        return $total;
+    }
+
     private function getCurrentUser(): ?array
     {
         return session()->get('user');
@@ -83,7 +127,7 @@ class Report extends ResourceController
                 'avatar' => $currentUser['avatar'] ?? '',
                 'assignedTasksCount' => count($visibleTasks),
                 'approvedLogsCount' => count($approvedOwnLogs),
-                'totalProgressPoints' => array_sum(array_map(fn($log) => (int) ($log['progress_percent'] ?? 0), $approvedOwnLogs)),
+                'totalProgressPoints' => $this->calculateDeltaPoints($approvedOwnLogs),
             ]];
 
             return $this->respond([
@@ -92,34 +136,63 @@ class Report extends ResourceController
             ]);
         }
 
-        // 1. Thống kê tổng quan số lượng
         $db = \Config\Database::connect();
-        
-        $totalStaff = $userModel->where('role', 'staff')->countAllResults();
-        $totalTasks = $taskModel->countAll();
-        
-        $pendingTasks = $taskModel->where('status', 'pending')->countAllResults();
-        $inProgressTasks = $taskModel->where('status', 'in_progress')->countAllResults();
-        $completedTasks = $taskModel->where('status', 'completed')->countAllResults();
+        $allTasks = $taskModel->getDetailedTask();
+        $allLogs = $logModel->getDetailedLogs();
 
-        // 2. Tính toán năng suất sản lượng chi tiết của từng nhân viên (Employee Productivity)
-        // Những nhân viên có logs được phê duyệt (Approved/Auto-approved)
-        $productivityQuery = $db->query("
-            SELECT 
-                u.id as userId, 
-                u.name, 
-                u.avatar,
-                (SELECT COUNT(DISTINCT ta.task_id) FROM task_assignments ta WHERE ta.user_id = u.id) as assignedTasksCount,
-                COUNT(dpl.id) as approvedLogsCount,
-                IFNULL(SUM(dpl.progress_percent), 0) as totalProgressPoints
-            FROM users u
-            LEFT JOIN daily_progress_logs dpl ON dpl.user_id = u.id AND dpl.status = 'approved'
-            WHERE u.role = 'staff'
-            GROUP BY u.id, u.name, u.avatar
-            ORDER BY totalProgressPoints DESC
-        ");
+        $staffUsers = $userModel->where('role', 'staff')->findAll();
+        $totalStaff = count($staffUsers);
+        $totalTasks = count($allTasks);
+        $pendingTasks = count(array_filter($allTasks, static fn($task) => ($task['status'] ?? '') === 'pending'));
+        $inProgressTasks = count(array_filter($allTasks, static fn($task) => ($task['status'] ?? '') === 'in_progress'));
+        $completedTasks = count(array_filter($allTasks, static fn($task) => ($task['status'] ?? '') === 'completed'));
 
-        $employeeProductivity = $productivityQuery->getResultArray();
+        $assignedRows = $db->table('task_assignments')
+            ->select('user_id, COUNT(DISTINCT task_id) as assigned_tasks_count')
+            ->groupBy('user_id')
+            ->get()
+            ->getResultArray();
+
+        $assignedCountByUser = [];
+        foreach ($assignedRows as $row) {
+            $assignedCountByUser[(string) ($row['user_id'] ?? '')] = (int) ($row['assigned_tasks_count'] ?? 0);
+        }
+
+        $approvedLogsByUser = [];
+        foreach ($allLogs as $log) {
+            if (($log['status'] ?? '') !== 'approved') {
+                continue;
+            }
+
+            $userId = (string) ($log['user_id'] ?? '');
+            if ($userId === '') {
+                continue;
+            }
+
+            if (!isset($approvedLogsByUser[$userId])) {
+                $approvedLogsByUser[$userId] = [];
+            }
+            $approvedLogsByUser[$userId][] = $log;
+        }
+
+        $employeeProductivity = [];
+        foreach ($staffUsers as $staff) {
+            $userId = (string) ($staff['id'] ?? '');
+            $approvedLogs = $approvedLogsByUser[$userId] ?? [];
+
+            $employeeProductivity[] = [
+                'userId' => $userId,
+                'name' => $staff['name'] ?? '',
+                'avatar' => $staff['avatar'] ?? '',
+                'assignedTasksCount' => $assignedCountByUser[$userId] ?? 0,
+                'approvedLogsCount' => count($approvedLogs),
+                'totalProgressPoints' => $this->calculateDeltaPoints($approvedLogs),
+            ];
+        }
+
+        usort($employeeProductivity, static function ($a, $b) {
+            return ((int) ($b['totalProgressPoints'] ?? 0)) <=> ((int) ($a['totalProgressPoints'] ?? 0));
+        });
 
         return $this->respond([
             'summary' => [

@@ -11,9 +11,15 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
     <style>
+    html {
+        font-size: 17px;
+    }
+
     body {
         font-family: 'Be Vietnam Pro', 'Inter', sans-serif;
+        background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
     }
 
     h1,
@@ -26,6 +32,13 @@
     #sidebar-panel .tab-btn,
     #mobile-menu-drawer nav button {
         font-family: 'Be Vietnam Pro', 'Inter', sans-serif;
+        font-size: 0.9rem;
+    }
+
+    @media (min-width: 1280px) {
+        html {
+            font-size: 18px;
+        }
     }
 
     @media print {
@@ -43,46 +56,48 @@
     </style>
     <!-- Lucide Icons via CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/vn.js"></script>
 </head>
 
 <body id="moc-viet-body" class="min-h-screen bg-slate-50 flex flex-col text-slate-800">
 
     <!-- GLOBAL TOP NAVBAR -->
     <header id="app-header"
-        class="bg-slate-900 border-b border-slate-800 text-white z-30 sticky top-0 px-4 py-3 shadow-md no-print">
+        class="bg-white border-b border-slate-200 text-slate-800 z-30 sticky top-0 px-4 py-3 shadow-sm no-print">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <button onclick="toggleMobileMenu()"
-                    class="lg:hidden p-1.5 rounded-lg hover:bg-slate-800 focus:outline-none cursor-pointer">
+                    class="lg:hidden p-1.5 rounded-lg hover:bg-slate-100 focus:outline-none cursor-pointer">
                     <i data-lucide="menu" class="w-5 h-5" id="mobile-menu-trigger"></i>
                 </button>
                 <div class="flex items-center gap-2">
                     <div
-                        class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-400/20 flex items-center justify-center">
-                        <i data-lucide="hammer" class="w-4.5 h-4.5 text-indigo-400 animate-pulse"></i>
+                        class="w-8 h-8 rounded-lg bg-indigo-100 border border-indigo-200 flex items-center justify-center">
+                        <i data-lucide="hammer" class="w-4.5 h-4.5 text-indigo-600"></i>
                     </div>
                     <div>
                         <span class="font-extrabold tracking-tight text-sm uppercase brand-font">WorkHub</span>
-                        <span class="text-[9px] text-slate-400 block font-mono leading-none">QUẢN LÝ NHÂN SỰ</span>
+                        <span class="text-[9px] text-slate-500 block font-mono leading-none">QUẢN LÝ NHÂN SỰ</span>
                     </div>
                 </div>
             </div>
 
             <div class="flex items-center gap-4">
                 <!-- Clock Indicator -->
-                <div class="hidden md:flex items-center gap-1.5 text-xs text-slate-300 font-mono">
-                    <i data-lucide="clock" class="w-4 h-4 text-slate-400"></i>
+                <div class="hidden md:flex items-center gap-1.5 text-xs text-slate-600 font-mono">
+                    <i data-lucide="clock" class="w-4 h-4 text-slate-500"></i>
                     <span>Hôm nay: <strong>2026-05-21</strong> (Mũi Giờ Việt Nam)</span>
                 </div>
 
                 <!-- Account Badge -->
                 <button onclick="openProfileModal()"
-                    class="flex items-center gap-2.5 bg-slate-800 hover:bg-slate-750 px-3 py-1.5 rounded-xl border border-slate-700 cursor-pointer transition-all text-white text-left focus:outline-none">
+                    class="h-14 flex items-center gap-2.5 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-200 cursor-pointer transition-all text-slate-800 text-left focus:outline-none">
                     <img src="<?= $currentUser['avatar'] ?? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150' ?>"
-                        alt="Avatar" class="w-6.5 h-6.5 rounded-full object-cover border border-slate-600">
+                        alt="Avatar" class="w-10 h-10 shrink-0 rounded-full object-cover border border-slate-200">
                     <div class="hidden sm:block">
                         <p class="text-xs font-bold leading-tight"><?= esc($currentUser['name']) ?></p>
-                        <span class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold font-mono">
+                        <span class="text-[9px] uppercase tracking-wider text-slate-500 font-semibold font-mono">
                             <?php 
                                 if($currentUser['role'] === 'admin') echo 'Quản trị viên';
                                 elseif($currentUser['role'] === 'manager') echo 'Quản lý';
@@ -94,7 +109,7 @@
 
                 <!-- Logout Link -->
                 <a href="<?= base_url('logout') ?>"
-                    class="px-2.5 py-1.5 hover:bg-rose-500/10 text-slate-300 hover:text-rose-400 rounded-lg text-xs transition-all flex items-center gap-1 font-semibold cursor-pointer">
+                    class="px-2.5 py-1.5 hover:bg-rose-50 text-slate-600 hover:text-rose-600 rounded-lg text-xs transition-all flex items-center gap-1 font-semibold cursor-pointer">
                     <i data-lucide="log-out" class="w-4 h-4"></i>
                     <span class="hidden sm:inline">Đăng xuất</span>
                 </a>
@@ -111,7 +126,7 @@
             <nav class="space-y-1.5">
                 <!-- Tab 1: Dashboard -->
                 <button onclick="switchTab('dashboard')" id="tab-btn-dashboard"
-                    class="tab-btn w-full text-xs font-bold px-4 py-3 rounded-xl flex items-center gap-3 transition-all cursor-pointer bg-slate-900 text-white shadow-sm font-extrabold">
+                    class="tab-btn w-full text-xs font-bold px-4 py-3 rounded-xl flex items-center gap-3 transition-all cursor-pointer bg-indigo-600 text-white shadow-sm font-extrabold">
                     <i data-lucide="layout-dashboard" class="w-4 h-4 text-indigo-400"></i>
                     <span>Bảng Điều Khiển</span>
                 </button>
@@ -147,7 +162,7 @@
                 <button onclick="switchTab('logs')" id="tab-btn-logs"
                     class="tab-btn w-full text-xs font-bold px-4 py-3 rounded-xl flex items-center gap-3 transition-all cursor-pointer text-slate-600 hover:text-slate-900 hover:bg-slate-50">
                     <i data-lucide="hammer" class="w-4 h-4 text-slate-400"></i>
-                    <span><?= $currentUser['role'] === 'staff' ? 'Báo Cáo Công Việc Ngày' : 'Duyệt Báo Cáo Công Việc' ?></span>
+                    <span><?= $currentUser['role'] === 'staff' ? 'Báo Cáo Công Việc Ngày' : 'Duyệt BC Công Việc' ?></span>
                 </button>
 
                 <!-- Tab 6: Performance Reports -->
@@ -504,10 +519,50 @@
                     </button>
                 </div>
 
+                <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 space-y-3 no-print">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Tìm
+                                theo tên / loại</label>
+                            <input id="filter-task-keyword" type="text" oninput="renderTasksTimeline()"
+                                placeholder="Ví dụ: bàn ghế, hành chính..."
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Loại
+                                công việc</label>
+                            <select id="filter-task-category" onchange="renderTasksTimeline()"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
+                                <option value="">Tất cả loại</option>
+                                <?php foreach($categories as $cat): ?>
+                                <option value="<?= esc($cat['id']) ?>"><?= esc($cat['name']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Từ
+                                ngày</label>
+                            <input id="filter-task-from" type="date" onchange="renderTasksTimeline()"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Đến
+                                ngày</label>
+                            <input id="filter-task-to" type="date" onchange="renderTasksTimeline()"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
+                        </div>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="button" onclick="clearTaskFilters()"
+                            class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 text-[11px] font-bold">Xóa
+                            bộ lọc</button>
+                    </div>
+                </div>
+
                 <!-- Tasks Listing & Gantt overview -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Detailed task list left side -->
-                    <div class="lg:col-span-2 space-y-4" id="tasks-timeline-container">
+                <div class="space-y-4">
+                    <!-- Detailed task list full width -->
+                    <div class="space-y-4" id="tasks-timeline-container">
                         <!-- Loaded via JS dynamically -->
                         <div
                             class="text-center py-10 bg-white border border-slate-200 rounded-2xl italic text-slate-400 text-xs">
@@ -515,16 +570,15 @@
                         </div>
                     </div>
 
-                    <!-- Right sidebar task statistics -->
-                    <div class="space-y-6">
-                        <div class="p-5 bg-white border border-slate-200 rounded-2xl shadow-sm space-y-4">
-                            <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Lưu ý khi gán việc
-                            </h3>
-                            <p class="text-xs text-slate-500 leading-relaxed">
-                                Bạn có thể gán nhiều nhân viên vào cùng một công việc để họ phối hợp và nộp báo cáo
-                                chung theo tiến độ.
-                            </p>
-                        </div>
+                    <!-- Note section -->
+                    <div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl shadow-sm space-y-2">
+                        <h3 class="text-xs font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="info" class="w-4 h-4"></i> Lưu ý
+                        </h3>
+                        <p class="text-xs text-amber-700 leading-relaxed">
+                            Bạn có thể gán nhiều nhân viên vào cùng một công việc để họ phối hợp và nộp báo cáo chung
+                            theo tiến độ.
+                        </p>
                     </div>
                 </div>
             </section>
@@ -549,24 +603,51 @@
                     <?php endif; ?>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                    <!-- Logs list grid -->
-                    <div class="lg:col-span-3 space-y-4" id="logs-feed-container">
-                        <p class="text-xs text-slate-400 italic text-center py-12">Đang nạp bảng tin cập nhật... </p>
-                    </div>
-
-                    <!-- Filter panel side -->
-                    <div class="p-5 bg-white border border-slate-200 rounded-2xl shadow-sm h-fit space-y-4 no-print">
+                <div class="space-y-4">
+                    <!-- Filter panel top -->
+                    <div class="p-5 bg-white border border-slate-200 rounded-2xl shadow-sm space-y-4 no-print">
                         <h3
                             class="text-xs font-bold text-slate-900 uppercase tracking-wider pb-1 border-b border-slate-100">
                             Tìm lọc nhanh</h3>
 
-                        <div class="space-y-3 text-xs">
-                            <div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 text-xs">
+                            <div class="xl:col-span-1">
+                                <label
+                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Công
+                                    việc</label>
+                                <select id="filter-log-task-id" onchange="renderProgressLogs()"
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
+                                    <option value="">Tất cả công việc</option>
+                                </select>
+                            </div>
+
+                            <div class="xl:col-span-1">
+                                <label
+                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Từ
+                                    khóa</label>
+                                <input id="filter-log-keyword" type="text" oninput="renderProgressLogs()"
+                                    placeholder="Tên nhân viên, tên việc, ghi chú..."
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
+                            </div>
+
+                            <div class="xl:col-span-1">
+                                <label
+                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Loại
+                                    công việc</label>
+                                <select id="filter-log-category" onchange="renderProgressLogs()"
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
+                                    <option value="">Tất cả loại</option>
+                                    <?php foreach($categories as $cat): ?>
+                                    <option value="<?= esc($cat['id']) ?>"><?= esc($cat['name']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
+                            <div class="xl:col-span-1">
                                 <label
                                     class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Trạng
                                     thái duyệt</label>
-                                <select id="filter-log-status" onchange="loadProgressLogs()"
+                                <select id="filter-log-status" onchange="renderProgressLogs()"
                                     class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
                                     <option value="">Tất cả trạng thái</option>
                                     <option value="pending">Đợi phê duyệt (Pending)</option>
@@ -574,7 +655,35 @@
                                     <option value="rejected">Từ chối (Rejected)</option>
                                 </select>
                             </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 md:col-span-2 xl:col-span-3">
+                                <div>
+                                    <label
+                                        class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Từ
+                                        ngày</label>
+                                    <input id="filter-log-from" type="date" onchange="renderProgressLogs()"
+                                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Đến
+                                        ngày</label>
+                                    <input id="filter-log-to" type="date" onchange="renderProgressLogs()"
+                                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
+                                </div>
+                            </div>
+
+                            <div class="pt-1 flex justify-end md:col-span-2 xl:col-span-1">
+                                <button type="button" onclick="clearLogFilters()"
+                                    class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 text-[11px] font-bold">Xóa
+                                    bộ lọc</button>
+                            </div>
                         </div>
+                    </div>
+
+                    <!-- Logs list full width -->
+                    <div class="space-y-4" id="logs-feed-container">
+                        <p class="text-xs text-slate-400 italic text-center py-12">Đang nạp bảng tin cập nhật... </p>
                     </div>
                 </div>
             </section>
@@ -648,9 +757,9 @@
 
     <!-- 1. Staff Modal (Add / Edit) -->
     <div id="staff-modal"
-        class="hidden fixed inset-0 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 no-print">
+        class="hidden fixed inset-0 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 no-print">
         <div
-            class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 p-6 space-y-5 animate-in fade-in duration-200">
+            class="bg-white rounded-2xl max-w-4xl w-[96vw] sm:w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-100 p-4 sm:p-6 space-y-5 animate-in fade-in duration-200">
             <div class="flex justify-between items-center pb-3 border-b border-slate-150">
                 <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
                     <i data-lucide="user-plus" class="text-indigo-600 w-5 h-5"></i> <span id="staff-modal-title">Thêm Hồ
@@ -773,9 +882,9 @@
 
     <!-- 2. Task Modal (Add / Edit) -->
     <div id="task-modal"
-        class="hidden fixed inset-0 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 no-print">
+        class="hidden fixed inset-0 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 no-print">
         <div
-            class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 p-6 space-y-5 animate-in fade-in duration-200">
+            class="bg-white rounded-2xl max-w-4xl w-[96vw] sm:w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-100 p-4 sm:p-6 space-y-5 animate-in fade-in duration-200">
             <div class="flex justify-between items-center pb-3 border-b border-slate-150">
                 <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
                     <i data-lucide="clipboard-list" class="text-indigo-600 w-5 h-5"></i> <span id="task-modal-title">Tạo
@@ -865,9 +974,9 @@
 
     <!-- 3. Worker Progress Submission Modal (Staff Only) -->
     <div id="submit-log-modal"
-        class="hidden fixed inset-0 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 no-print">
+        class="hidden fixed inset-0 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 no-print">
         <div
-            class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 p-6 space-y-5 animate-in fade-in duration-200">
+            class="bg-white rounded-2xl max-w-3xl w-[96vw] sm:w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-100 p-4 sm:p-6 space-y-5 animate-in fade-in duration-200">
             <div class="flex justify-between items-center pb-3 border-b border-slate-150">
                 <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
                     <i data-lucide="plus" class="text-indigo-600 w-5 h-5"></i> <span>Ghi Báo Cáo Công Việc</span>
@@ -894,8 +1003,9 @@
                         <div class="flex items-center gap-2 pt-1">
                             <input type="range" id="log-progress-slider" min="0" max="100" step="5" value="50"
                                 oninput="document.getElementById('slider-val-lbl').innerText = this.value + '%'"
-                                class="w-full accent-slate-900">
-                            <span id="slider-val-lbl" class="text-xs font-bold text-slate-900 min-w-[35px]">50%</span>
+                                class="w-full accent-indigo-600 transition-all duration-200">
+                            <span id="slider-val-lbl"
+                                class="text-xs font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-md px-2 py-0.5 min-w-[46px] text-center transition-all duration-200">50%</span>
                         </div>
                     </div>
                     <div>
@@ -906,19 +1016,25 @@
                     </div>
                 </div>
 
+                <div id="log-progress-feedback" class="hidden rounded-xl border px-3 py-2 text-[11px]"></div>
+
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Đăng ảnh
-                        minh chứng thực tế <span class="text-rose-500">*</span></label>
-                    <input type="file" id="log-image" accept="image/png, image/jpeg, image/jpg" class="hidden"
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tệp minh
+                        chứng
+                        (Ảnh hoặc tài liệu) <span class="text-rose-500">*</span></label>
+                    <input type="file" id="log-image"
+                        accept="image/png, image/jpeg, image/jpg,.pdf,.doc,.docx,.xls,.xlsx" class="hidden"
                         onchange="previewSelectedImage(event)">
                     <div onclick="document.getElementById('log-image').click()"
                         class="border-2 border-dashed border-slate-200 hover:border-slate-400 bg-slate-50 rounded-2xl p-6 text-center cursor-pointer transition-all space-y-2">
-                        <i data-lucide="image" class="w-8 h-8 text-slate-400 mx-auto"></i>
-                        <span class="block text-xs font-bold text-slate-500">Ấn để chọn ảnh hoặc kéo thả vào đây</span>
-                        <span class="text-[9px] text-slate-400">Yêu cầu ảnh JPG/PNG rõ nội dung công việc</span>
+                        <i data-lucide="paperclip" class="w-8 h-8 text-slate-400 mx-auto"></i>
+                        <span class="block text-xs font-bold text-slate-500">Ấn để chọn tệp đính kèm</span>
+                        <span class="text-[9px] text-slate-400">Hỗ trợ JPG/PNG/PDF/DOC/DOCX/XLS/XLSX (tối đa
+                            10MB)</span>
                         <div id="image-upload-preview-container" class="hidden pt-2">
                             <img id="image-upload-preview" src="#" alt="Xem trước"
                                 class="max-h-[140px] rounded-xl mx-auto border border-slate-200 shadow-sm">
+                            <p id="file-upload-name" class="hidden mt-2 text-[11px] font-semibold text-slate-600"></p>
                         </div>
                     </div>
                 </div>
@@ -943,11 +1059,28 @@
         </div>
     </div>
 
+    <!-- Image Preview Modal -->
+    <div id="image-preview-modal"
+        class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 z-[60] no-print"
+        onclick="closeImageViewerModal()">
+        <div class="relative w-full max-w-5xl" onclick="event.stopPropagation()">
+            <button type="button" onclick="closeImageViewerModal()"
+                class="absolute -top-11 right-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/95 text-slate-700 hover:bg-white text-xs font-bold cursor-pointer shadow">
+                <i data-lucide="x" class="w-4 h-4"></i>
+                Đóng
+            </button>
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden">
+                <img id="image-preview-modal-src" src="" alt="Ảnh minh chứng"
+                    class="w-full max-h-[82vh] object-contain bg-slate-100">
+            </div>
+        </div>
+    </div>
+
     <!-- 4. Profile Edit Modal -->
     <div id="profile-modal"
-        class="hidden fixed inset-0 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 no-print">
+        class="hidden fixed inset-0 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 no-print">
         <div
-            class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 p-6 space-y-5 animate-in fade-in duration-250">
+            class="bg-white rounded-2xl max-w-2xl w-[96vw] sm:w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-100 p-4 sm:p-6 space-y-5 animate-in fade-in duration-250">
             <div class="flex justify-between items-center pb-3 border-b border-slate-150">
                 <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
                     <i data-lucide="user" class="text-indigo-600 w-5 h-5"></i> <span>Hồ Sơ Cá Nhân</span>
@@ -977,7 +1110,7 @@
                     <span class="block text-[9px] text-slate-400 mt-1">Ấn để thay đổi (PNG/JPG)</span>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Họ và
                             tên</label>
@@ -992,7 +1125,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Căn cước
                             công dân</label>
@@ -1035,9 +1168,9 @@
 
     <!-- 5. Master Category Modal (Add / Edit) -->
     <div id="category-modal"
-        class="hidden fixed inset-0 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 no-print">
+        class="hidden fixed inset-0 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 no-print">
         <div
-            class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 p-6 space-y-5 animate-in fade-in duration-200">
+            class="bg-white rounded-2xl max-w-2xl w-[96vw] sm:w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-100 p-4 sm:p-6 space-y-5 animate-in fade-in duration-200">
             <div class="flex justify-between items-center pb-3 border-b border-slate-150">
                 <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
                     <i data-lucide="tags" class="text-indigo-600 w-5 h-5"></i> <span id="category-modal-title">Cập nhật
@@ -1109,16 +1242,63 @@
     let cachePositions = [];
     let cacheJobCategories = [];
     let cachePermissions = [];
+    let datePickers = {};
+
+    function getTodayISODate() {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    }
+
+    function initDatePickers() {
+        if (typeof flatpickr !== 'function') return;
+
+        const dateFieldIds = ['staff-dob', 'task-start-date', 'task-end-date', 'log-date', 'profile-dob',
+            'filter-task-from', 'filter-task-to'
+        ];
+        dateFieldIds.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (!field) return;
+
+            field.type = 'text';
+
+            if (datePickers[fieldId] && typeof datePickers[fieldId].destroy === 'function') {
+                datePickers[fieldId].destroy();
+            }
+
+            datePickers[fieldId] = flatpickr(field, {
+                dateFormat: 'Y-m-d',
+                locale: 'vn',
+                disableMobile: true,
+                allowInput: false
+            });
+        });
+    }
+
+    function setDateFieldValue(fieldId, value) {
+        const normalized = value || '';
+        if (datePickers[fieldId] && typeof datePickers[fieldId].setDate === 'function') {
+            if (normalized) {
+                datePickers[fieldId].setDate(normalized, false, 'Y-m-d');
+            } else {
+                datePickers[fieldId].clear();
+            }
+            return;
+        }
+
+        const field = document.getElementById(fieldId);
+        if (field) field.value = normalized;
+    }
 
     // Initialize Lucide Icons initially
     lucide.createIcons();
 
     // On document ready
     window.addEventListener('DOMContentLoaded', () => {
+        initDatePickers();
+
         // Pre-load Date Inputs to today
-        const todayStr = '2026-05-21';
-        const logDateInput = document.getElementById('log-date');
-        if (logDateInput) logDateInput.value = todayStr;
+        const todayStr = getTodayISODate();
+        setDateFieldValue('log-date', todayStr);
 
         // Load all database parameters from endpoint
         syncData();
@@ -1160,6 +1340,7 @@
             // Form elements update
             populateWorkersSelections();
             populateWorkerTaskSelect();
+            populateLogTaskFilterOptions();
         } catch (err) {
             console.error("Database connection snapped: ", err);
             showToast("alarm", "Kết nối chậm", "Không thể lấy số liệu gỗ thực tế hoặc CSDL MySQL tạm nghỉ.");
@@ -1183,14 +1364,14 @@
         // Un-active all desk buttons
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.className =
-                "tab-btn w-full text-xs font-bold px-4 py-3 rounded-xl flex items-center gap-3 transition-all cursor-pointer text-slate-600 hover:text-slate-900 hover:bg-slate-50";
+                "tab-btn w-full text-xs font-bold px-4 py-3 rounded-xl flex items-center gap-3 transition-all cursor-pointer text-slate-700 hover:text-indigo-700 hover:bg-indigo-50";
         });
 
         // Set current active button
         const activeBtn = document.getElementById('tab-btn-' + tabId);
         if (activeBtn) {
             activeBtn.className =
-                "tab-btn w-full text-xs font-bold px-4 py-3 rounded-xl flex items-center gap-3 transition-all cursor-pointer bg-slate-900 text-white shadow-sm font-extrabold";
+                "tab-btn w-full text-xs font-bold px-4 py-3 rounded-xl flex items-center gap-3 transition-all cursor-pointer bg-indigo-600 text-white shadow-sm font-extrabold";
         }
 
         // Close mobile menu if responsive
@@ -1543,7 +1724,7 @@
         document.getElementById('staff-name').value = user.name;
         document.getElementById('staff-phone').value = user.phone;
         document.getElementById('staff-ic').value = user.identity_card;
-        document.getElementById('staff-dob').value = user.dob || '';
+        setDateFieldValue('staff-dob', user.dob || '');
         document.getElementById('staff-address').value = user.address || '';
         document.getElementById('staff-role').value = user.role;
         document.getElementById('staff-position-id').value = user.position_id || '';
@@ -1580,6 +1761,250 @@
     // ----------------------------------------------------
     // DYNAMIC VIEWPORT 4: TASKS MANAGEMENT & PLANNING
     // ----------------------------------------------------
+    function getFilteredTasksForTimeline() {
+        const keyword = (document.getElementById('filter-task-keyword')?.value || '').toLowerCase().trim();
+        const categoryId = (document.getElementById('filter-task-category')?.value || '').trim();
+        const fromDate = (document.getElementById('filter-task-from')?.value || '').trim();
+        const toDate = (document.getElementById('filter-task-to')?.value || '').trim();
+
+        return cacheTasks.filter(task => {
+            const title = String(task.title || '').toLowerCase();
+            const categoryName = String(task.job_category_name || '').toLowerCase();
+            const taskCategoryId = String(task.job_category_id || '');
+            const taskStart = String(task.start_date || '');
+            const taskEnd = String(task.end_date || task.start_date || '');
+
+            if (keyword && !title.includes(keyword) && !categoryName.includes(keyword)) {
+                return false;
+            }
+
+            if (categoryId && taskCategoryId !== categoryId) {
+                return false;
+            }
+
+            // Keep tasks that overlap the selected window.
+            if (fromDate && toDate) {
+                if (!taskStart || !taskEnd || taskStart > toDate || taskEnd < fromDate) {
+                    return false;
+                }
+            } else if (fromDate) {
+                if (!taskEnd || taskEnd < fromDate) {
+                    return false;
+                }
+            } else if (toDate) {
+                if (!taskStart || taskStart > toDate) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    }
+
+    function clearTaskFilters() {
+        const keyword = document.getElementById('filter-task-keyword');
+        const category = document.getElementById('filter-task-category');
+        if (keyword) keyword.value = '';
+        if (category) category.value = '';
+        setDateFieldValue('filter-task-from', '');
+        setDateFieldValue('filter-task-to', '');
+        renderTasksTimeline();
+    }
+
+    function escapeHtmlAttr(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    function openImageViewerModal(imageUrl) {
+        const modal = document.getElementById('image-preview-modal');
+        const imageEl = document.getElementById('image-preview-modal-src');
+        const url = String(imageUrl || '').trim();
+        if (!modal || !imageEl || !url) return;
+
+        imageEl.src = url;
+        modal.classList.remove('hidden');
+    }
+
+    function closeImageViewerModal() {
+        const modal = document.getElementById('image-preview-modal');
+        const imageEl = document.getElementById('image-preview-modal-src');
+        if (!modal || !imageEl) return;
+
+        modal.classList.add('hidden');
+        imageEl.src = '';
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') return;
+        const modal = document.getElementById('image-preview-modal');
+        if (modal && !modal.classList.contains('hidden')) {
+            closeImageViewerModal();
+        }
+    });
+
+    function getAppBaseUrl() {
+        const apiLogsUrl = '<?= rtrim(base_url('api/logs'), '/') ?>';
+        return apiLogsUrl.replace(/\/api\/logs(?:\/.*)?$/i, '');
+    }
+
+    function normalizeAttachmentUrl(rawUrl) {
+        const url = String(rawUrl || '').trim();
+        if (!url) return '';
+
+        if (/^data:/i.test(url) || /^https?:\/\//i.test(url)) {
+            try {
+                const parsed = new URL(url);
+                const appBase = getAppBaseUrl();
+                const appBaseParsed = new URL(appBase, window.location.origin);
+
+                if (
+                    parsed.origin === appBaseParsed.origin &&
+                    /^\/uploads\//i.test(parsed.pathname) &&
+                    /\/public$/i.test(appBaseParsed.pathname)
+                ) {
+                    return `${appBaseParsed.origin}${appBaseParsed.pathname}${parsed.pathname}${parsed.search}${parsed.hash}`;
+                }
+            } catch (_) {
+                // Keep original URL on parse failure.
+            }
+            return url;
+        }
+
+        const appBase = getAppBaseUrl();
+        if (/^\/uploads\//i.test(url)) {
+            return `${appBase}${url}`;
+        }
+        if (/^uploads\//i.test(url)) {
+            return `${appBase}/${url}`;
+        }
+        if (/^\/public\/uploads\//i.test(url)) {
+            return `${appBase}${url.replace(/^\/public/i, '')}`;
+        }
+
+        return `${appBase}/${url.replace(/^\/+/, '')}`;
+    }
+
+    function resolveAttachmentUrl(log) {
+        const candidates = [
+            log?.image,
+            log?.attachment,
+            log?.attachment_url,
+            log?.file_url,
+            log?.file_path,
+            log?.image_url,
+        ];
+
+        for (const raw of candidates) {
+            const normalized = normalizeAttachmentUrl(raw);
+            if (normalized) return normalized;
+        }
+
+        return '';
+    }
+
+    function getAttachmentMeta(attachmentUrl, mimeHint = '') {
+        const url = String(attachmentUrl || '').trim();
+        const mime = String(mimeHint || '').toLowerCase().trim();
+        if (!url) {
+            return {
+                url: '',
+                ext: '',
+                isImage: false,
+                isDocument: false
+            };
+        }
+
+        const cleanUrl = url.split('?')[0].split('#')[0];
+        const ext = cleanUrl.includes('.') ? cleanUrl.split('.').pop().toLowerCase() : '';
+        const imageExt = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'];
+        const documentExt = ['pdf', 'doc', 'docx', 'xls', 'xlsx'];
+
+        const isDataImage = url.startsWith('data:image/');
+        const isMimeImage = mime.startsWith('image/');
+        const isMimeDocument = mime.startsWith('application/');
+        const looksLikeImageUrl =
+            /images\.unsplash\.com|imgur\.com|cloudinary|\/uploads\/progress_logs\//i.test(url) ||
+            /[?&](fm|format)=(jpg|jpeg|png|webp|gif)/i.test(url);
+
+        const isDocumentByExt = documentExt.includes(ext);
+        const isImageByExt = imageExt.includes(ext);
+        const isDocument = isDocumentByExt || (isMimeDocument && !isMimeImage);
+        const isImage = isImageByExt || isDataImage || isMimeImage || (!isDocument && looksLikeImageUrl);
+
+        return {
+            url,
+            ext,
+            isImage,
+            isDocument
+        };
+    }
+
+    function renderTimelineAttachment(log) {
+        const attachment = getAttachmentMeta(
+            resolveAttachmentUrl(log),
+            log.image_mime || log.mime_type || log.attachment_mime
+        );
+        if (!attachment.url) return '';
+
+        if (attachment.isImage) {
+            const safeUrl = escapeHtmlAttr(attachment.url);
+            return `
+                <button type="button" onclick="openImageViewerModal(this.dataset.src)" data-src="${safeUrl}" class="relative block max-w-[124px] rounded-lg overflow-hidden border border-slate-150 mt-1 cursor-zoom-in text-left" title="Xem ảnh minh chứng">
+                    <img src="${safeUrl}" class="w-full h-14 object-cover hover:scale-105 transition-all">
+                </button>`;
+        }
+
+        const icon = attachment.ext === 'pdf' ? 'file-text' : 'file-spreadsheet';
+        const extLabel = attachment.ext ? attachment.ext.toUpperCase() : 'FILE';
+        return `
+            <a href="${attachment.url}" target="_blank" rel="noopener noreferrer" class="mt-1 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-[10px] font-bold">
+                <i data-lucide="${icon}" class="w-3.5 h-3.5 text-indigo-600"></i>
+                Xem tài liệu (${extLabel})
+            </a>`;
+    }
+
+    function renderReviewAttachment(log, progressValue) {
+        const attachment = getAttachmentMeta(
+            resolveAttachmentUrl(log),
+            log.image_mime || log.mime_type || log.attachment_mime
+        );
+        const progressBadge =
+            `<div class="absolute bottom-2 left-2 bg-slate-900/85 text-white px-2.5 py-1 rounded-md text-[10px] font-extrabold tracking-wide shadow">${progressValue}% hoàn thiện</div>`;
+
+        if (attachment.url && attachment.isImage) {
+            const safeUrl = escapeHtmlAttr(attachment.url);
+            return `
+                <div class="md:w-56 overflow-hidden bg-slate-100 relative max-h-[160px] md:max-h-none flex items-center justify-center shrink-0 border-b md:border-b-0 md:border-r border-slate-150">
+                    <button type="button" onclick="openImageViewerModal(this.dataset.src)" data-src="${safeUrl}" class="block w-full h-full text-left cursor-zoom-in">
+                        <img src="${safeUrl}" alt="Báo cáo" class="w-full h-full object-cover">
+                    </button>
+                    ${progressBadge}
+                </div>`;
+        }
+
+        if (attachment.url && attachment.isDocument) {
+            const icon = attachment.ext === 'pdf' ? 'file-text' : 'file-spreadsheet';
+            const extLabel = attachment.ext.toUpperCase();
+            return `
+                <div class="md:w-56 bg-slate-50 relative max-h-[160px] md:max-h-none flex flex-col items-center justify-center shrink-0 border-b md:border-b-0 md:border-r border-slate-150 p-4 text-center gap-2">
+                    <i data-lucide="${icon}" class="w-8 h-8 text-indigo-600"></i>
+                    <span class="text-[11px] font-bold text-slate-700">Tài liệu ${extLabel}</span>
+                    <a href="${attachment.url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-[10px] font-bold text-slate-700">Mở tệp</a>
+                    ${progressBadge}
+                </div>`;
+        }
+
+        return `
+            <div class="md:w-56 overflow-hidden bg-slate-100 relative max-h-[160px] md:max-h-none flex items-center justify-center shrink-0 border-b md:border-b-0 md:border-r border-slate-150">
+                <img src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80" alt="Báo cáo" class="w-full h-full object-cover">
+                ${progressBadge}
+            </div>`;
+    }
+
     function renderTasksTimeline() {
         const container = document.getElementById('tasks-timeline-container');
         container.innerHTML = '';
@@ -1593,7 +2018,17 @@
             return;
         }
 
-        cacheTasks.forEach(task => {
+        const filteredTasks = getFilteredTasksForTimeline();
+        if (filteredTasks.length === 0) {
+            container.innerHTML = `
+                    <div class="text-center py-12 bg-white border border-slate-200 rounded-2xl italic text-slate-400 text-xs">
+                        Không tìm thấy công việc phù hợp bộ lọc.
+                    </div>
+                `;
+            return;
+        }
+
+        filteredTasks.forEach(task => {
             // Calculate progress bar level
             const approvedLogs = cacheLogs.filter(l => l.task_id === task.id && l.status === "approved");
             const progressVal = approvedLogs.length === 0 ? 0 : Math.max(...approvedLogs.map(l => parseInt(l
@@ -1633,6 +2068,8 @@
             const div = document.createElement('div');
             div.className =
                 "bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm space-y-3 hover:border-slate-300 transition-all";
+            const isManagerView = PHP_CURRENT_USER.role !== 'staff';
+            const timelineId = `task-timeline-${task.id}`;
 
             // Allow dynamic admin/manager controls
             let editTaskControls = '';
@@ -1649,6 +2086,7 @@
                             <span class="bg-indigo-50 text-indigo-700 border border-indigo-100 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md">${task.job_category_name || 'Công việc chung'}</span>
                             <h3 class="text-sm font-bold text-slate-900 mt-1.5">${task.title}</h3>
                             <p class="text-[10px] text-slate-400 font-mono mt-0.5">Ngày chạy: ${task.start_date} ~ Hạn định: ${task.end_date}</p>
+                            ${isManagerView ? `<button onclick="toggleTaskTimeline('${task.id}')" id="timeline-toggle-${task.id}" class="mt-2 px-2.5 py-1 text-[10px] font-bold rounded-lg border border-indigo-100 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-all no-print">Xem chi tiết</button>` : ''}
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0">
                             <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${badgeStyle}">${badgeText}</span>
@@ -1672,24 +2110,24 @@
                     </div>
 
                     <!-- Dynamic Task-specific Vertical Progress Logs (Timeline) -->
-                    ${(() => {
-                        const taskLogs = cacheLogs.filter(l => l.task_id === task.id || l.taskId === task.id);
-                        if (taskLogs.length === 0) {
+                    <div id="${timelineId}" class="${isManagerView ? 'hidden' : ''}">
+                        ${(() => {
+                            const taskLogs = cacheLogs.filter(l => l.task_id === task.id || l.taskId === task.id);
+                            if (taskLogs.length === 0) {
+                                return `
+                                    <div class="mt-3 pt-3 border-t border-slate-100">
+                                        <p class="text-[10px] text-slate-400 italic">Chưa có nhật ký báo cáo tiến độ nào được đăng tải.</p>
+                                    </div>
+                                `;
+                            }
                             return `
-                                <div class="mt-3 pt-3 border-t border-slate-100">
-                                    <p class="text-[10px] text-slate-400 italic">Chưa có nhật ký báo cáo tiến độ nào được đăng tải.</p>
-                                </div>
-                            `;
-                        }
-                        return `
-                            <div class="mt-4 pt-4 border-t border-slate-100">
-                                <h4 class="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1.5 no-print">
-                                    <i data-lucide="history" class="w-3.5 h-3.5 text-indigo-500"></i>
-                                    Nhật lý báo cáo Timeline (${taskLogs.length} lần cập nhật)
-                                </h4>
-                                <div class="relative pl-3 border-l-2 border-slate-150 space-y-3.5 my-2">
-                                    ${taskLogs
-                                        .map(log => {
+                                <div class="mt-4 pt-4 border-t border-slate-100">
+                                    <h4 class="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1.5 no-print">
+                                        <i data-lucide="history" class="w-3.5 h-3.5 text-indigo-500"></i>
+                                        Nhật lý báo cáo Timeline (${taskLogs.length} lần cập nhật)
+                                    </h4>
+                                    <div class="relative pl-3 border-l-2 border-slate-150 space-y-3.5 my-2">
+                                        ${taskLogs.map(log => {
                                             let logStatusBadge = '';
                                             let dotColor = 'bg-slate-300';
                                             if (log.status === 'approved') {
@@ -1709,12 +2147,10 @@
                                             return `
                                                 <div class="relative group text-xs">
                                                     <div class="absolute -left-[19px] top-1 w-2.5 h-2.5 rounded-full ${dotColor} border-2 border-white shadow-xs transition-colors group-hover:scale-125"></div>
-
                                                     <div class="bg-slate-50/70 hover:bg-slate-50 p-2.5 rounded-xl border border-slate-150/40 transition-all space-y-1.5">
                                                         <div class="flex flex-wrap items-center justify-between gap-1.5">
                                                             <div class="flex items-center gap-1.5 align-middle">
-                                                                <img src="${log.user_avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=250'}"
-                                                                     class="w-4.5 h-4.5 rounded-full object-cover border border-slate-200" title="${log.user_name}">
+                                                                <img src="${log.user_avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=250'}" class="w-8 h-8 rounded-full object-cover border border-slate-200" title="${log.user_name}">
                                                                 <span class="font-bold text-slate-800">${log.user_name}</span>
                                                                 <span class="text-[9px] text-slate-400 font-mono">${log.date}</span>
                                                             </div>
@@ -1724,23 +2160,33 @@
                                                             </div>
                                                         </div>
                                                         <p class="text-slate-600 font-normal leading-relaxed text-[11px]">${log.notes}</p>
-                                                        ${log.image ? `
-                                                            <div class="relative max-w-[124px] rounded-lg overflow-hidden border border-slate-150 mt-1 cursor-zoom-in" onclick="zoomImage('${log.image}')">
-                                                                <img src="${log.image}" class="w-full h-14 object-cover hover:scale-105 transition-all">
-                                                            </div>` : ''}
+                                                        ${renderTimelineAttachment(log)}
                                                     </div>
                                                 </div>
                                             `;
-                                        })
-                                        .join('')}
+                                        }).join('')}
+                                    </div>
                                 </div>
-                            </div>
-                        `;
-                    })()}
+                            `;
+                        })()}
+                    </div>
                 `;
             container.appendChild(div);
         });
         lucide.createIcons();
+    }
+
+    function toggleTaskTimeline(taskId) {
+        const timeline = document.getElementById(`task-timeline-${taskId}`);
+        const btn = document.getElementById(`timeline-toggle-${taskId}`);
+        if (!timeline) return;
+
+        const willShow = timeline.classList.contains('hidden');
+        timeline.classList.toggle('hidden');
+
+        if (btn) {
+            btn.innerText = willShow ? 'Ẩn chi tiết' : 'Xem chi tiết';
+        }
     }
 
     function populateWorkersSelections() {
@@ -1853,8 +2299,8 @@
         document.getElementById('task-job-category-id').value = task.job_category_id || '';
         document.getElementById('task-status').value = task.status;
         document.getElementById('task-status-wrap').classList.remove('hidden');
-        document.getElementById('task-start-date').value = task.start_date;
-        document.getElementById('task-end-date').value = task.end_date;
+        setDateFieldValue('task-start-date', task.start_date);
+        setDateFieldValue('task-end-date', task.end_date);
         document.getElementById('task-description').value = task.description || '';
 
         // Check assignees checkboxes in modal
@@ -1885,16 +2331,102 @@
     // ----------------------------------------------------
     // DYNAMIC VIEWPORT 5: REVIEWS PROGRESS FEED & DISPATCH
     // ----------------------------------------------------
+    function populateLogTaskFilterOptions() {
+        const select = document.getElementById('filter-log-task-id');
+        if (!select) return;
+
+        const currentValue = select.value || '';
+        const optionsHtml = [...cacheTasks].sort((a, b) => String(a.title || '').localeCompare(String(b.title || '')))
+            .map(task =>
+                `<option value="${task.id}">${task.title} [${task.job_category_name || 'Chung'}]</option>`
+            ).join('');
+
+        select.innerHTML = `<option value="">Tất cả công việc</option>${optionsHtml}`;
+
+        if (currentValue && cacheTasks.some(t => String(t.id) === String(currentValue))) {
+            select.value = currentValue;
+        }
+    }
+
+    function getFilteredProgressLogs() {
+        const selectedTaskId = (document.getElementById('filter-log-task-id')?.value || '').trim();
+        const selectedTaskIdNormalized = selectedTaskId.toLowerCase();
+        const selectedTask = cacheTasks.find(t => String(t.id || '').toLowerCase() === selectedTaskIdNormalized);
+        const selectedTaskTitleNormalized = String(selectedTask?.title || '').toLowerCase().trim();
+
+        const keyword = (document.getElementById('filter-log-keyword')?.value || '').toLowerCase().trim();
+        const categoryId = (document.getElementById('filter-log-category')?.value || '').trim();
+        const filterStatus = (document.getElementById('filter-log-status')?.value || '').trim();
+        const fromDate = (document.getElementById('filter-log-from')?.value || '').trim();
+        const toDate = (document.getElementById('filter-log-to')?.value || '').trim();
+
+        return cacheLogs.filter(log => {
+            const logStatus = String(log.status || '');
+            const logDate = String(log.date || '');
+            const rawTaskId = log.task_id ?? log.taskId ?? log.taskID ?? log.task?.id ?? '';
+            const taskId = String(rawTaskId || '').trim();
+            const taskIdNormalized = taskId.toLowerCase();
+            const task = cacheTasks.find(t => String(t.id) === taskId) || {};
+            const taskCategoryId = String(task.job_category_id || '');
+            const logTaskTitleNormalized = String(log.task_title || '').toLowerCase().trim();
+
+            const searchText = [
+                log.user_name,
+                log.task_title,
+                log.notes,
+                task.job_category_name
+            ].map(x => String(x || '').toLowerCase()).join(' ');
+
+            if (selectedTaskId) {
+                const matchedById = taskIdNormalized && taskIdNormalized === selectedTaskIdNormalized;
+                const matchedByTitle = !matchedById && !!selectedTaskTitleNormalized &&
+                    logTaskTitleNormalized === selectedTaskTitleNormalized;
+
+                if (!matchedById && !matchedByTitle) {
+                    return false;
+                }
+            }
+
+            if (filterStatus && logStatus !== filterStatus) {
+                return false;
+            }
+
+            if (keyword && !searchText.includes(keyword)) {
+                return false;
+            }
+
+            if (categoryId && taskCategoryId !== categoryId) {
+                return false;
+            }
+
+            if (fromDate && (!logDate || logDate < fromDate)) {
+                return false;
+            }
+
+            if (toDate && (!logDate || logDate > toDate)) {
+                return false;
+            }
+
+            return true;
+        });
+    }
+
+    function clearLogFilters() {
+        ['filter-log-task-id', 'filter-log-keyword', 'filter-log-category', 'filter-log-status', 'filter-log-from',
+            'filter-log-to'
+        ].forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.value = '';
+        });
+
+        renderProgressLogs();
+    }
+
     function renderProgressLogs() {
         const container = document.getElementById('logs-feed-container');
         container.innerHTML = '';
 
-        const filterStatus = document.getElementById('filter-log-status').value;
-        let displayLogs = [...cacheLogs];
-
-        if (filterStatus) {
-            displayLogs = displayLogs.filter(l => l.status === filterStatus);
-        }
+        const displayLogs = getFilteredProgressLogs();
 
         if (displayLogs.length === 0) {
             container.innerHTML = `
@@ -1906,6 +2438,23 @@
         }
 
         displayLogs.forEach(log => {
+            const progressValue = Number(log.progress_percent ?? log.progressPercent ?? 0);
+            const clampedProgress = Math.max(0, Math.min(100, progressValue));
+            let progressBadgeClass = "bg-rose-50 border-rose-200 text-rose-700 ring-1 ring-rose-100";
+            let progressBarClass = "bg-rose-500";
+
+            if (clampedProgress >= 100) {
+                progressBadgeClass =
+                    "bg-emerald-50 border-emerald-200 text-emerald-700 ring-1 ring-emerald-100";
+                progressBarClass = "bg-emerald-500";
+            } else if (clampedProgress >= 60) {
+                progressBadgeClass = "bg-blue-50 border-blue-200 text-blue-700 ring-1 ring-blue-100";
+                progressBarClass = "bg-blue-500";
+            } else if (clampedProgress >= 30) {
+                progressBadgeClass = "bg-amber-50 border-amber-200 text-amber-700 ring-1 ring-amber-100";
+                progressBarClass = "bg-amber-500";
+            }
+
             // Status mapping
             let statusBadge = "bg-amber-100 text-amber-800 border-amber-200";
             let statusName = "Chờ duyệt";
@@ -1937,10 +2486,7 @@
             card.className =
                 "bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm flex flex-col md:flex-row";
             card.innerHTML = `
-                    <div class="md:w-56 overflow-hidden bg-slate-100 relative max-h-[160px] md:max-h-none flex items-center justify-center shrink-0 border-b md:border-b-0 md:border-r border-slate-150">
-                        <img src="${log.image || 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80'}" alt="Báo cáo" class="w-full h-full object-cover">
-                        <div class="absolute bottom-2 left-2 bg-slate-900/80 text-white px-2 py-0.5 rounded text-[9px] font-bold">${log.progress_percent}% hoàn thiện</div>
-                    </div>
+                    ${renderReviewAttachment(log, clampedProgress)}
 
                     <div class="p-5 flex-1 flex flex-col justify-between space-y-3">
                         <div class="space-y-1.5">
@@ -1955,7 +2501,16 @@
                                 <span class="px-2 py-0.5 rounded-md border text-[9px] font-bold uppercase shrink-0 ${statusBadge}">${statusName}</span>
                             </div>
 
-                            <p class="text-[11px] font-extrabold text-slate-500">Công việc: <span class="text-slate-800">${log.task_title}</span></p>
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <p class="text-[11px] font-extrabold text-slate-500">Công việc: <span class="text-slate-800">${log.task_title}</span></p>
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-md border text-[10px] font-extrabold ${progressBadgeClass}">Tiến độ: ${clampedProgress}%</span>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="w-full h-2 rounded-full bg-slate-100 border border-slate-200 overflow-hidden">
+                                    <div class="h-full ${progressBarClass} transition-all duration-300" style="width: ${clampedProgress}%"></div>
+                                </div>
+                                <p class="text-[10px] font-semibold text-slate-500">Mức hoàn thiện hiện tại</p>
+                            </div>
                             <p class="text-xs text-slate-600 leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-150">${log.notes}</p>
                             
                             ${log.status === 'approved' && log.approver_name ? `
@@ -1990,6 +2545,141 @@
             select.innerHTML +=
                 `<option value="${task.id}">${task.title} [${task.job_category_name || 'Chung'}]</option>`;
         });
+
+        select.onchange = () => syncLogProgressConstraint(select.value);
+    }
+
+    function getLatestOwnProgressForTask(taskId, dateLimit = null) {
+        const taskLogs = cacheLogs
+            .filter(log => {
+                const isSameTask = log.task_id === taskId || log.taskId === taskId;
+                const isOwnLog = log.user_id === PHP_CURRENT_USER.id || log.userId === PHP_CURRENT_USER.id;
+                const isBeforeSelectedDate = !dateLimit || String(log.date || '') < String(dateLimit);
+                return isSameTask && isOwnLog && isBeforeSelectedDate;
+            })
+            .sort((a, b) => {
+                const dateDiff = String(b.date || '').localeCompare(String(a.date || ''));
+                if (dateDiff !== 0) return dateDiff;
+                return Number(b.id || 0) - Number(a.id || 0);
+            });
+
+        return taskLogs[0] || null;
+    }
+
+    function getNextOwnProgressForTask(taskId, dateLimit = null) {
+        if (!dateLimit) return null;
+
+        const taskLogs = cacheLogs
+            .filter(log => {
+                const isSameTask = log.task_id === taskId || log.taskId === taskId;
+                const isOwnLog = log.user_id === PHP_CURRENT_USER.id || log.userId === PHP_CURRENT_USER.id;
+                const isAfterSelectedDate = String(log.date || '') > String(dateLimit);
+                return isSameTask && isOwnLog && isAfterSelectedDate;
+            })
+            .sort((a, b) => {
+                const dateDiff = String(a.date || '').localeCompare(String(b.date || ''));
+                if (dateDiff !== 0) return dateDiff;
+                return Number(a.id || 0) - Number(b.id || 0);
+            });
+
+        return taskLogs[0] || null;
+    }
+
+    function setLogProgressFeedback(message = '', tone = 'info') {
+        const feedback = document.getElementById('log-progress-feedback');
+        if (!feedback) return;
+
+        if (!message) {
+            feedback.className = 'hidden rounded-xl border px-3 py-2 text-[11px]';
+            feedback.textContent = '';
+            return;
+        }
+
+        if (tone === 'error') {
+            feedback.className = 'rounded-xl border border-rose-200 bg-rose-50 text-rose-700 px-3 py-2 text-[11px]';
+        } else {
+            feedback.className = 'rounded-xl border border-amber-200 bg-amber-50 text-amber-700 px-3 py-2 text-[11px]';
+        }
+
+        feedback.textContent = message;
+    }
+
+    function updateProgressTone(value) {
+        const slider = document.getElementById('log-progress-slider');
+        const label = document.getElementById('slider-val-lbl');
+        if (!slider || !label) return;
+
+        const val = Number(value || 0);
+
+        slider.classList.remove('accent-rose-500', 'accent-amber-500', 'accent-indigo-600', 'accent-emerald-600');
+        label.classList.remove(
+            'text-rose-700', 'bg-rose-50', 'border-rose-100',
+            'text-amber-700', 'bg-amber-50', 'border-amber-100',
+            'text-indigo-700', 'bg-indigo-50', 'border-indigo-100',
+            'text-emerald-700', 'bg-emerald-50', 'border-emerald-100'
+        );
+
+        if (val < 30) {
+            slider.classList.add('accent-rose-500');
+            label.classList.add('text-rose-700', 'bg-rose-50', 'border-rose-100');
+        } else if (val < 60) {
+            slider.classList.add('accent-amber-500');
+            label.classList.add('text-amber-700', 'bg-amber-50', 'border-amber-100');
+        } else if (val < 85) {
+            slider.classList.add('accent-indigo-600');
+            label.classList.add('text-indigo-700', 'bg-indigo-50', 'border-indigo-100');
+        } else {
+            slider.classList.add('accent-emerald-600');
+            label.classList.add('text-emerald-700', 'bg-emerald-50', 'border-emerald-100');
+        }
+    }
+
+    function syncLogProgressConstraint(taskId) {
+        const slider = document.getElementById('log-progress-slider');
+        const label = document.getElementById('slider-val-lbl');
+        const dateInput = document.getElementById('log-date');
+        if (!slider || !label) return;
+
+        const selectedDate = dateInput ? dateInput.value : '';
+        const previousLog = taskId ? getLatestOwnProgressForTask(taskId, selectedDate) : null;
+        const nextLog = taskId ? getNextOwnProgressForTask(taskId, selectedDate) : null;
+        const minValue = previousLog ? Number(previousLog.progress_percent || previousLog.progressPercent || 0) : 0;
+        const maxValue = nextLog ? Number(nextLog.progress_percent || nextLog.progressPercent || 100) : 100;
+
+        slider.min = String(minValue);
+        slider.max = String(maxValue);
+        if (Number(slider.value) < minValue) {
+            slider.value = String(minValue);
+        }
+        if (Number(slider.value) > maxValue) {
+            slider.value = String(maxValue);
+        }
+
+        updateProgressTone(Number(slider.value));
+        label.innerText = slider.value + '%';
+        slider.title = previousLog || nextLog ? `Khoảng hợp lệ: ${minValue}% - ${maxValue}%` : 'Mức hợp lệ: 0% - 100%';
+
+        if (previousLog && nextLog) {
+            const targetDate = selectedDate || 'ngày đã chọn';
+            setLogProgressFeedback(
+                `Tiến độ cho ${targetDate} phải từ ${minValue}% đến ${maxValue}% (mốc trước: ${previousLog.date}, mốc sau: ${nextLog.date}).`,
+                'info'
+            );
+        } else if (previousLog) {
+            const targetDate = selectedDate || 'ngày đã chọn';
+            setLogProgressFeedback(
+                `Tiến độ cho ${targetDate} phải >= ${minValue}% (mốc trước: ${previousLog.date}).`,
+                'info'
+            );
+        } else if (nextLog) {
+            const targetDate = selectedDate || 'ngày đã chọn';
+            setLogProgressFeedback(
+                `Bạn đang nhập ngày cũ, tiến độ phải <= ${maxValue}% (mốc sau: ${nextLog.date}).`,
+                'info'
+            );
+        } else {
+            setLogProgressFeedback('');
+        }
     }
 
     // --- PROFILE EDIT CONTROLLERS ---
@@ -1998,7 +2688,7 @@
 
         // Populate form fields from current user session data
         document.getElementById('profile-name').value = PHP_CURRENT_USER.name || '';
-        document.getElementById('profile-dob').value = PHP_CURRENT_USER.dob || '';
+        setDateFieldValue('profile-dob', PHP_CURRENT_USER.dob || '');
         document.getElementById('profile-address').value = PHP_CURRENT_USER.address || '';
         document.getElementById('profile-ic').value = PHP_CURRENT_USER.identity_card || '';
         document.getElementById('profile-phone').value = PHP_CURRENT_USER.phone || '';
@@ -2136,59 +2826,87 @@
         document.getElementById('submit-log-form').reset();
         document.getElementById('image-upload-preview-container').classList.add('hidden');
         document.getElementById('slider-val-lbl').innerText = '50%';
-        logImageBase64 = null; // Clear old log image
+        document.getElementById('log-progress-slider').min = '0';
+        document.getElementById('log-progress-slider').max = '100';
+        updateProgressTone(50);
+        setLogProgressFeedback('');
+
+        const todayStr = getTodayISODate();
+        setDateFieldValue('log-date', todayStr);
+        const logDateField = document.getElementById('log-date');
+
+        const taskSelect = document.getElementById('log-task-id');
+        const dateInput = logDateField;
+        const slider = document.getElementById('log-progress-slider');
+
+        const reevaluateConstraint = () => syncLogProgressConstraint(taskSelect ? taskSelect.value : '');
+
+        reevaluateConstraint();
+
+        if (dateInput) {
+            dateInput.onchange = reevaluateConstraint;
+        }
+
+        if (slider) {
+            slider.oninput = () => {
+                reevaluateConstraint();
+            };
+        }
+
+        const previewImage = document.getElementById('image-upload-preview');
+        const previewName = document.getElementById('file-upload-name');
+        if (previewImage) previewImage.classList.remove('hidden');
+        if (previewName) {
+            previewName.classList.add('hidden');
+            previewName.textContent = '';
+        }
+
+        logAttachmentFile = null;
     }
 
     function closeSubmitLogModal() {
         document.getElementById('submit-log-modal').classList.add('hidden');
     }
 
-    let logImageBase64 = null;
+    let logAttachmentFile = null;
 
     function previewSelectedImage(event) {
         const file = event.target.files[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const img = new Image();
-            img.onload = function() {
-                // Create canvas for downscaling progress log image (max 600px width/height is extremely detailed and small)
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
+        logAttachmentFile = file;
 
-                const maxDim = 600;
-                let width = img.width;
-                let height = img.height;
+        const preview = document.getElementById('image-upload-preview');
+        const container = document.getElementById('image-upload-preview-container');
+        const fileName = document.getElementById('file-upload-name');
+        if (!container) return;
+        container.classList.remove('hidden');
 
-                if (width > height) {
-                    if (width > maxDim) {
-                        height = Math.round((height * maxDim) / width);
-                        width = maxDim;
-                    }
-                } else {
-                    if (height > maxDim) {
-                        width = Math.round((width * maxDim) / height);
-                        height = maxDim;
-                    }
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (preview) {
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
                 }
-
-                canvas.width = width;
-                canvas.height = height;
-                ctx.drawImage(img, 0, 0, width, height);
-
-                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.80);
-
-                const preview = document.getElementById('image-upload-preview');
-                const container = document.getElementById('image-upload-preview-container');
-                preview.src = compressedBase64;
-                container.classList.remove('hidden');
-
-                logImageBase64 = compressedBase64;
+                if (fileName) {
+                    fileName.classList.add('hidden');
+                    fileName.textContent = '';
+                }
             };
-            img.src = e.target.result;
+            reader.readAsDataURL(file);
+            return;
         }
-        reader.readAsDataURL(file);
+
+        if (preview) {
+            preview.classList.add('hidden');
+            preview.removeAttribute('src');
+        }
+        if (fileName) {
+            const ext = (file.name.split('.').pop() || 'FILE').toUpperCase();
+            fileName.textContent = `Đã chọn tệp: ${file.name} (${ext})`;
+            fileName.classList.remove('hidden');
+        }
     }
 
     async function handleLogSubmit(event) {
@@ -2201,37 +2919,66 @@
         const progress_percent = Number(document.getElementById('log-progress-slider').value);
         const date = document.getElementById('log-date').value;
         const notes = document.getElementById('log-notes').value.trim();
+        const previousLog = task_id ? getLatestOwnProgressForTask(task_id, date) : null;
+        const nextLog = task_id ? getNextOwnProgressForTask(task_id, date) : null;
+        const previousProgress = previousLog ? Number(previousLog.progress_percent || previousLog.progressPercent ||
+            0) : 0;
+        const nextProgress = nextLog ? Number(nextLog.progress_percent || nextLog.progressPercent || 100) : 100;
 
-        const bodyData = {
-            task_id,
-            user_id: PHP_CURRENT_USER.id,
-            progress_percent,
-            date,
-            notes
-        };
+        if (previousLog && progress_percent < previousProgress) {
+            setLogProgressFeedback(
+                `Tiến độ của ngày sau phải lớn hơn hoặc bằng ngày trước. Mức trước đó là ${previousProgress}%.`,
+                'error'
+            );
+            document.getElementById('log-progress-slider').focus();
+            btnSubmit.disabled = false;
+            btnSubmit.innerText = 'Nộp báo cáo';
+            return;
+        }
 
-        if (logImageBase64) {
-            bodyData.image = logImageBase64;
+        if (nextLog && progress_percent > nextProgress) {
+            setLogProgressFeedback(
+                `Bạn đang nhập ngày cũ nên tiến độ phải nhỏ hơn hoặc bằng ngày hiện tại gần nhất. Mức mốc sau là ${nextProgress}%.`,
+                'error'
+            );
+            document.getElementById('log-progress-slider').focus();
+            btnSubmit.disabled = false;
+            btnSubmit.innerText = 'Nộp báo cáo';
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('task_id', task_id);
+        formData.append('user_id', PHP_CURRENT_USER.id || '');
+        formData.append('progress_percent', String(progress_percent));
+        formData.append('date', date);
+        formData.append('notes', notes);
+        if (logAttachmentFile) {
+            formData.append('attachment', logAttachmentFile);
         }
 
         try {
-            // Send as JSON format so that standard application/json parsed perfectly by Node express server
             const response = await fetch('<?= base_url('api/logs') ?>', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(bodyData)
+                body: formData
             });
 
-            const r = await response.json();
+            const r = await response.json().catch(() => ({}));
 
             if (response.ok) {
                 showToast("success", "Nộp thành công", "Báo cáo công việc đã gửi lên máy chủ thành công.");
+                setLogProgressFeedback('');
                 closeSubmitLogModal();
                 syncData();
             } else {
-                showToast("alarm", "Lỗi dữ liệu", r.error || "Gửi báo cáo thất bại");
+                const backendMessage = r.messages?.error || r.message || r.error || 'Gửi báo cáo thất bại';
+                setLogProgressFeedback(String(backendMessage), 'error');
+
+                if (String(backendMessage).includes('Tiến độ')) {
+                    document.getElementById('log-progress-slider').focus();
+                } else {
+                    showToast('alarm', 'Lỗi dữ liệu', String(backendMessage));
+                }
             }
         } catch (err) {
             console.error(err);
