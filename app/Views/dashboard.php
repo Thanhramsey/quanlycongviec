@@ -297,7 +297,7 @@
                         <div>
                             <span
                                 class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Đang
-                                ghé lắp</span>
+                                xử lý</span>
                             <span class="text-2xl font-extrabold text-slate-900 leading-none"
                                 id="kpi-active-tasks">...</span>
                         </div>
@@ -308,7 +308,7 @@
                         <div>
                             <span
                                 class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Hoàn
-                                thiện thô</span>
+                                thiện</span>
                             <span class="text-2xl font-extrabold text-slate-900 leading-none"
                                 id="kpi-done-tasks">...</span>
                         </div>
@@ -1531,16 +1531,71 @@
         }
     }
 
+    function getTaskProgressSnapshot(task) {
+        const assignees = task.assigned_users || [];
+        const assigneeIds = assignees.map(u => String(u.id || ''));
+
+        const approvedLogs = cacheLogs.filter(l => {
+            const sameTask = l.task_id === task.id || l.taskId === task.id;
+            const approved = l.status === 'approved';
+            if (!sameTask || !approved) return false;
+
+            if (assigneeIds.length === 0) return true;
+            const logUserId = String(l.user_id || l.userId || '');
+            return assigneeIds.includes(logUserId);
+        });
+
+        let progress = 0;
+        if (assigneeIds.length > 0) {
+            const sortedLogs = [...approvedLogs].sort((a, b) => {
+                const aDate = String(a.date || '');
+                const bDate = String(b.date || '');
+                if (aDate !== bDate) {
+                    return bDate.localeCompare(aDate);
+                }
+
+                const aId = Number(a.id || 0);
+                const bId = Number(b.id || 0);
+                return bId - aId;
+            });
+
+            const latestByUser = {};
+            sortedLogs.forEach(log => {
+                const userId = String(log.user_id || log.userId || '');
+                if (!userId || latestByUser[userId] !== undefined) return;
+                latestByUser[userId] = Number(log.progress_percent || log.progressPercent || 0);
+            });
+
+            const sum = assigneeIds.reduce((acc, userId) => acc + Number(latestByUser[userId] || 0), 0);
+            progress = Math.round(sum / Math.max(1, assigneeIds.length));
+        } else if (approvedLogs.length > 0) {
+            progress = Math.max(...approvedLogs.map(l => Number(l.progress_percent || l.progressPercent || 0)));
+        }
+
+        progress = Math.max(0, Math.min(100, progress));
+        const status = progress >= 100 ? 'completed' : (progress > 0 ? 'in_progress' : 'pending');
+
+        return {
+            progress,
+            status
+        };
+    }
+
     // ----------------------------------------------------
     // DYNAMIC VIEWPORT 1: DASHBOARD METRICS
     // ----------------------------------------------------
     function renderDashboardMetrics() {
         if (!cacheStats) return;
         const s = cacheStats.summary;
+        const taskSnapshots = cacheTasks.map(task => getTaskProgressSnapshot(task));
+        const totalTasks = cacheTasks.length;
+        const inProgressTasks = taskSnapshots.filter(item => item.status === 'in_progress').length;
+        const completedTasks = taskSnapshots.filter(item => item.status === 'completed').length;
+
         document.getElementById('kpi-staff').innerText = s.totalStaff + ' người';
-        document.getElementById('kpi-tasks').innerText = s.totalTasks + ' việc';
-        document.getElementById('kpi-active-tasks').innerText = s.inProgressTasks + ' việc';
-        document.getElementById('kpi-done-tasks').innerText = s.completedTasks + ' việc';
+        document.getElementById('kpi-tasks').innerText = totalTasks + ' việc';
+        document.getElementById('kpi-active-tasks').innerText = inProgressTasks + ' việc';
+        document.getElementById('kpi-done-tasks').innerText = completedTasks + ' việc';
 
         // Top employer avatar block
         const bestPerformerWidget = document.getElementById('best-performer-widget');
@@ -2169,18 +2224,17 @@
         }
 
         filteredTasks.forEach(task => {
-            // Calculate progress bar level
-            const approvedLogs = cacheLogs.filter(l => l.task_id === task.id && l.status === "approved");
-            const progressVal = approvedLogs.length === 0 ? 0 : Math.max(...approvedLogs.map(l => parseInt(l
-                .progress_percent)));
+            const snapshot = getTaskProgressSnapshot(task);
+            const progressVal = snapshot.progress;
+            const displayStatus = snapshot.status;
 
             // Status badging
             let badgeStyle = "bg-amber-50 text-amber-700";
             let badgeText = "Bắt đầu làm";
-            if (task.status === "completed") {
+            if (displayStatus === "completed") {
                 badgeStyle = "bg-emerald-50 text-emerald-700";
                 badgeText = "Hoàn thành";
-            } else if (task.status === "in_progress") {
+            } else if (displayStatus === "in_progress") {
                 badgeStyle = "bg-indigo-50 text-indigo-700";
                 badgeText = "Đang thi công";
             }
