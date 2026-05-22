@@ -568,6 +568,18 @@
 
             <form id="staff-form" class="space-y-4" onsubmit="handleStaffSubmit(event)">
                 <input type="hidden" id="staff-edit-id" value="">
+
+                <div class="space-y-1 text-center">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Ảnh đại diện nhân sự</label>
+                    <input type="file" id="staff-avatar-file" accept="image/png, image/jpeg, image/jpg" class="hidden" onchange="previewStaffAvatar(event)">
+                    <div onclick="document.getElementById('staff-avatar-file').click()" class="relative group cursor-pointer w-20 h-20 mx-auto rounded-full overflow-hidden border-2 border-slate-200 hover:border-slate-400 transition-all shadow-sm">
+                        <img id="staff-avatar-preview" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150" class="w-full h-full object-cover" alt="Avatar preview">
+                        <div class="absolute inset-0 bg-black/45 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i data-lucide="camera" class="w-5 h-5 text-white"></i>
+                        </div>
+                    </div>
+                    <span class="block text-[9px] text-slate-400 mt-1">Ấn để thay đổi (PNG/JPG)</span>
+                </div>
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -618,31 +630,8 @@
 
                 <div class="bg-slate-50 p-4 border border-slate-150 rounded-xl space-y-2">
                     <span class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Phân quyền chức trách đặc thù</span>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700">
-                        <label class="flex items-center gap-2 cursor-pointer select-none">
-                            <input type="checkbox" name="permissions" value="p1" class="rounded text-slate-900 focus:ring-0">
-                            <span>p1: Xem tất cả công việc</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer select-none">
-                            <input type="checkbox" name="permissions" value="p2" class="rounded text-slate-900 focus:ring-0">
-                            <span>p2: Quản lý công việc</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer select-none">
-                            <input type="checkbox" name="permissions" value="p3" class="rounded text-slate-900 focus:ring-0">
-                            <span>p3: Duyệt tiến hàng ngày</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer select-none">
-                            <input type="checkbox" name="permissions" value="p4" class="rounded text-slate-900 focus:ring-0">
-                            <span>p4: Quản lý nhân sự</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer select-none">
-                            <input type="checkbox" name="permissions" value="p5" class="rounded text-slate-900 focus:ring-0">
-                            <span>p5: Quản lý danh mục</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer select-none">
-                            <input type="checkbox" name="permissions" value="p6" class="rounded text-slate-900 focus:ring-0">
-                            <span>p6: Xem báo cáo thống kê</span>
-                        </label>
+                    <div id="staff-permissions-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700">
+                        <span class="text-slate-400 italic text-[11px]">Đang tải danh mục quyền...</span>
                     </div>
                 </div>
 
@@ -880,7 +869,7 @@
 
                 <div class="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
                     <button type="button" onclick="closeCategoryModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-bold text-slate-700 cursor-pointer">Bỏ qua</button>
-                    <button type="submit" id="btn-category-submit" class="px-4 py-2 bg-indigo-650 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm cursor-pointer">Lưu cập nhật</button>
+                    <button type="submit" id="btn-category-submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm cursor-pointer">Lưu cập nhật</button>
                 </div>
             </form>
         </div>
@@ -1150,17 +1139,46 @@
         }
 
         // Staff CRUD Submissions
+        let staffAvatarBase64 = null;
+
         function openStaffModal() {
             document.getElementById('staff-modal').classList.remove('hidden');
             document.getElementById('staff-modal-title').innerText = "Thêm Hồ Sơ Thợ Mộc";
             document.getElementById('staff-edit-id').value = '';
             document.getElementById('staff-form').reset();
             document.getElementById('pwd-required-star').style.display = 'inline';
+            document.getElementById('staff-avatar-preview').src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150';
+            staffAvatarBase64 = null;
+            renderStaffPermissionOptions();
             adjustPermissionCheckboxesByRole();
         }
 
         function closeStaffModal() {
             document.getElementById('staff-modal').classList.add('hidden');
+        }
+
+        function renderStaffPermissionOptions(selectedPermissions = []) {
+            const container = document.getElementById('staff-permissions-grid');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            if (!Array.isArray(cachePermissions) || cachePermissions.length === 0) {
+                container.innerHTML = `<span class="text-slate-400 italic text-[11px]">Chưa có quyền nào trong danh mục.</span>`;
+                return;
+            }
+
+            const selectedSet = new Set(Array.isArray(selectedPermissions) ? selectedPermissions : []);
+
+            cachePermissions.forEach(perm => {
+                const label = document.createElement('label');
+                label.className = 'flex items-center gap-2 cursor-pointer select-none';
+                label.innerHTML = `
+                    <input type="checkbox" name="permissions" value="${perm.id}" class="rounded text-slate-900 focus:ring-0" ${selectedSet.has(perm.id) ? 'checked' : ''}>
+                    <span>${perm.id}: ${perm.name}</span>
+                `;
+                container.appendChild(label);
+            });
         }
 
         function adjustPermissionCheckboxesByRole() {
@@ -1181,6 +1199,46 @@
                     }
                 }
             });
+        }
+
+        function previewStaffAvatar(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    const maxDim = 160;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > maxDim) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        }
+                    } else {
+                        if (height > maxDim) {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+                    document.getElementById('staff-avatar-preview').src = compressedBase64;
+                    staffAvatarBase64 = compressedBase64;
+                };
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
         }
 
         async function handleStaffSubmit(event) {
@@ -1204,6 +1262,9 @@
             const bodyData = { name, phone, identity_card, dob, address, role, position_id, custom_permissions };
             if (password) {
                 bodyData.password = password;
+            }
+            if (staffAvatarBase64) {
+                bodyData.avatar = staffAvatarBase64;
             }
 
             try {
@@ -1252,12 +1313,12 @@
             document.getElementById('staff-role').value = user.role;
             document.getElementById('staff-position-id').value = user.position_id || '';
             document.getElementById('pwd-required-star').style.display = 'none';
+            document.getElementById('staff-avatar-preview').src = user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150';
+            staffAvatarBase64 = null;
 
             // Check permissions
             const permissionsList = user.custom_permissions || [];
-            document.querySelectorAll('input[name="permissions"]').forEach(cb => {
-                cb.checked = permissionsList.includes(cb.value);
-            });
+            renderStaffPermissionOptions(permissionsList);
         }
 
         async function deleteStaff(userId) {
