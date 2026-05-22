@@ -66,7 +66,7 @@ class Personnel extends ResourceController
         // Validate duplicates
         $exist = $model->where('phone', $data['phone'])->first();
         if ($exist) {
-            return $this->fail('Số điện thoại thợ đã tồn tại trong danh nghiệp', 400);
+            return $this->fail('Số điện thoại nhân viên đã tồn tại trong doanh nghiệp', 400);
         }
 
         if ($model->insert($data)) {

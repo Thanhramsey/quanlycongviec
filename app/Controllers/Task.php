@@ -12,7 +12,7 @@ class Task extends ResourceController
     public function index()
     {
         $model = new TaskModel();
-        // Lấy chi tiết công việc kèm theo danh sách nhân viên được giao việc
+        // Lấy chi tiết công việc kèm theo danh sách nhân viên được giao
         $tasks = $model->getDetailedTask();
         return $this->respond($tasks);
     }
@@ -59,7 +59,7 @@ class Task extends ResourceController
             $responseTask = $model->getDetailedTask($taskId);
             return $this->respondCreated([
                 'status' => 'success',
-                'message' => 'Lập kế hoạch thi công mộc thành công',
+                'message' => 'Lập kế hoạch công việc thành công',
                 'task' => $responseTask
             ]);
         }
@@ -96,7 +96,7 @@ class Task extends ResourceController
             $updatedTask = $model->getDetailedTask($id);
             return $this->respond([
                 'status' => 'success',
-                'message' => 'Cập nhật tiến trình thi công thành công',
+                'message' => 'Cập nhật tiến độ công việc thành công',
                 'task' => $updatedTask
             ]);
         }
@@ -113,14 +113,14 @@ class Task extends ResourceController
             return $this->failNotFound('Không tìm thấy đầu việc tương thích');
         }
 
-        // Xóa các liên kết gán thợ trước (task_assignments đã config ON DELETE CASCADE nhưng đảm bảo an toàn nếu chưa)
+        // Xóa các liên kết phân công trước (task_assignments đã config ON DELETE CASCADE nhưng đảm bảo an toàn nếu chưa)
         $this->db = \Config\Database::connect();
         $this->db->table('task_assignments')->where('task_id', $id)->delete();
 
         if ($model->delete($id)) {
             return $this->respondDeleted([
                 'status' => 'success',
-                'message' => 'Đã hủy bỏ đầu mục công việc và phân công phụ trợ'
+                'message' => 'Đã hủy bỏ đầu mục công việc và dữ liệu phân công'
             ]);
         }
 

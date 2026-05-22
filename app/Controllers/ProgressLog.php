@@ -26,7 +26,7 @@ class ProgressLog extends ResourceController
     }
 
     /**
-     * Nhân viên đăng tải báo cáo tiến độ và upload ảnh thực tế lên hệ thống mộc
+     * Nhân viên đăng tải báo cáo tiến độ và upload ảnh minh chứng thực tế
      */
     public function create()
     {
@@ -93,7 +93,7 @@ class ProgressLog extends ResourceController
             $log = $model->find($insertedId);
             return $this->respondCreated([
                 'status' => 'success',
-                'message' => 'Nộp nhật ký tiến độ lắp đặt đồ gỗ thành công',
+                'message' => 'Nộp báo cáo tiến độ công việc thành công',
                 'log' => $log
             ]);
         }
@@ -102,7 +102,7 @@ class ProgressLog extends ResourceController
     }
 
     /**
-     * Admin/Quản lý phê duyệt (approve / reject) báo cáo của thợ mộc
+     * Admin/Quản lý phê duyệt (approve / reject) báo cáo của nhân viên
      */
     public function approve($id = null)
     {
@@ -129,14 +129,14 @@ class ProgressLog extends ResourceController
         ];
 
         if ($model->update($id, $updateData)) {
-            // Cập nhật mức độ hoàn thành cao nhất của công việc mộc nếu log được duyệt
+            // Cập nhật mức độ hoàn thành cao nhất của công việc nếu log được duyệt
             if ($status === 'approved') {
                 $this->updateTaskOverallStatus($log['task_id'], $log['progress_percent']);
             }
 
             return $this->respond([
                 'status' => 'success',
-                'message' => $status === 'approved' ? 'Đã duyệt chất lượng sản lượng đóng gỗ' : 'Đã từ chối báo cáo công việc',
+                'message' => $status === 'approved' ? 'Đã duyệt báo cáo công việc' : 'Đã từ chối báo cáo công việc',
                 'log_id' => $id
             ]);
         }

@@ -49,7 +49,7 @@ $routes->group('api', function($routes) {
     $routes->put('tasks/(:segment)', 'Task::update/$1');
     $routes->delete('tasks/(:segment)', 'Task::delete/$1');
 
-    // 4. Daily Progress Logs (Nhật Ký Tiến Độ Nhật Trình Lắp Đặt)
+    // 4. Daily Progress Logs (Báo Cáo Tiến Độ Công Việc)
     $routes->get('logs', 'ProgressLog::index');
     $routes->post('logs', 'ProgressLog::create'); // Supports image file upload
     $routes->put('logs/approve/(:num)', 'ProgressLog::approve/$1'); // Admin/Manager approve or reject log

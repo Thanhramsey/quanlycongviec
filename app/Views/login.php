@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng Nhập - Hệ Thống Quản Lý Thợ Mộc Việt</title>
+    <title>Đăng Nhập - Hệ Thống Quản Lý Nhân Sự</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Inter -->
@@ -32,7 +32,7 @@
             class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-slate-900 text-white mb-4 shadow-md">
             <i data-lucide="hammer" class="w-6 h-6 text-indigo-400"></i>
         </div>
-        <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">MỘC VIỆT</h2>
+        <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">WORKHUB</h2>
         <p class="mt-1 text-sm text-slate-500 font-mono uppercase tracking-widest text-[11px]">
             Hệ Thống Quản Trị Nhân Sự & Công Việc
         </p>
@@ -98,8 +98,8 @@
                 <p class="text-[10px] text-slate-400 text-center leading-relaxed">
                     Tài khoản thử nghiệm nhanh:<br>
                     Quản trị viên: <strong class="text-slate-600">admin / 123</strong><br>
-                    Quản lý xưởng: <strong class="text-slate-600">manager / 123</strong><br>
-                    Thợ mộc phụ: <strong class="text-slate-600">0911111111 / 123</strong> (hoặc <strong
+                    Quản lý: <strong class="text-slate-600">manager / 123</strong><br>
+                    Nhân viên: <strong class="text-slate-600">0911111111 / 123</strong> (hoặc <strong
                         class="text-slate-600">staff_phuc / 123</strong>)
                 </p>
             </div>
@@ -160,7 +160,7 @@
             const data = await response.json();
 
             if (response.ok && data.status === 'success') {
-                showAlert('success', 'Đăng nhập thành công! Đang thiết lập phiên làm việc mộc...');
+                showAlert('success', 'Đăng nhập thành công! Đang thiết lập phiên làm việc...');
 
                 // Save user info in localStorage for frontend reference consistency
                 localStorage.setItem('moc_viet_user', JSON.stringify(data.user));

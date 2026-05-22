@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Điều Hành Mộc Việt - Quản Trị Toàn Diện</title>
+    <title>Hệ Thống Điều Hành Doanh Nghiệp - Quản Trị Toàn Diện</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Inter & Space Grotesk -->
@@ -44,8 +44,8 @@
                         <i data-lucide="hammer" class="w-4.5 h-4.5 text-indigo-400 animate-pulse"></i>
                     </div>
                     <div>
-                        <span class="font-extrabold tracking-tight text-sm uppercase brand-font">Mộc Việt</span>
-                        <span class="text-[9px] text-slate-400 block font-mono leading-none">QUẢN TRỊ TOÀN DIỆN</span>
+                        <span class="font-extrabold tracking-tight text-sm uppercase brand-font">WorkHub</span>
+                        <span class="text-[9px] text-slate-400 block font-mono leading-none">QUẢN LÝ NHÂN SỰ</span>
                     </div>
                 </div>
             </div>
@@ -68,8 +68,8 @@
                         <span class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold font-mono">
                             <?php 
                                 if($currentUser['role'] === 'admin') echo 'Quản trị viên';
-                                elseif($currentUser['role'] === 'manager') echo 'Quản lý xưởng';
-                                else echo 'Thợ thi công';
+                                elseif($currentUser['role'] === 'manager') echo 'Quản lý';
+                                else echo 'Nhân viên';
                             ?>
                         </span>
                     </div>
@@ -129,7 +129,7 @@
                 <button onclick="switchTab('logs')" id="tab-btn-logs"
                     class="tab-btn w-full text-xs font-bold px-4 py-3 rounded-xl flex items-center gap-3 transition-all cursor-pointer text-slate-600 hover:text-slate-900 hover:bg-slate-50">
                     <i data-lucide="hammer" class="w-4 h-4 text-slate-400"></i>
-                    <span><?= $currentUser['role'] === 'staff' ? 'Nhật Ký Tiến Độ Ngày' : 'Duyệt Nhật Trình Mộc' ?></span>
+                    <span><?= $currentUser['role'] === 'staff' ? 'Báo Cáo Công Việc Ngày' : 'Duyệt Báo Cáo Công Việc' ?></span>
                 </button>
 
                 <!-- Tab 6: Performance Reports -->
@@ -146,7 +146,7 @@
                     <span class="font-semibold text-slate-700">Tự động duyệt bật</span>
                 </div>
                 <p class="leading-normal">
-                    Mọi nhật trình thi công ghi nhận ngày cũ thuộc mộc thợ sẽ tự động chuyển trạng thái "Approved" để bảo toàn điểm năng suất sản lượng.
+                    Mọi báo cáo công việc ghi nhận ngày cũ chưa duyệt sẽ tự động chuyển trạng thái "Approved" để đảm bảo dữ liệu theo dõi.
                 </p>
             </div>
         </aside>
@@ -186,7 +186,7 @@
                         <?php endif; ?>
                         <button onclick="switchTab('logs')" class="w-full text-xs font-bold p-3 rounded-lg flex items-center gap-2.5 hover:bg-slate-50 text-slate-600">
                             <i data-lucide="hammer" class="w-4 h-4"></i>
-                            <span>Báo Cáo Nhật Trình</span>
+                            <span>Báo Cáo Công Việc</span>
                         </button>
                         <button onclick="switchTab('reports')" class="w-full text-xs font-bold p-3 rounded-lg flex items-center gap-2.5 hover:bg-slate-50 text-slate-600">
                             <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
@@ -195,7 +195,7 @@
                     </nav>
                 </div>
                 <div class="text-[9px] text-slate-400">
-                    © 2026 Mộc Việt Co., Ltd.
+                    © 2026 WorkHub Co., Ltd.
                 </div>
             </div>
         </div>
@@ -219,7 +219,7 @@
                     <h1 class="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                         <i data-lucide="layout-dashboard" class="text-indigo-600 w-6 h-6"></i> Bảng Tổng Quan Điều Hành
                     </h1>
-                    <p class="text-xs text-slate-500">Giám sát tổng thể tiến trình đục đẽo đóng mộc, thi công và xếp hạng năng lực nhân sự hằng ngày.</p>
+                    <p class="text-xs text-slate-500">Giám sát tổng thể tiến độ công việc, hiệu suất và năng lực nhân sự hằng ngày.</p>
                 </div>
 
                 <!-- Numerical KPI Grid -->
@@ -227,14 +227,14 @@
                     <div class="p-5 bg-white border border-slate-200/80 rounded-2xl shadow-sm flex items-center gap-3">
                         <div class="p-3 bg-indigo-50 rounded-xl text-indigo-600"><i data-lucide="users" class="w-5 h-5"></i></div>
                         <div>
-                            <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Thợ sản xuất</span>
+                            <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Nhân sự</span>
                             <span class="text-2xl font-extrabold text-slate-900 leading-none" id="kpi-staff">...</span>
                         </div>
                     </div>
                     <div class="p-5 bg-white border border-slate-200/80 rounded-2xl shadow-sm flex items-center gap-3">
                         <div class="p-3 bg-amber-50 rounded-xl text-amber-600"><i data-lucide="briefcase" class="w-5 h-5"></i></div>
                         <div>
-                            <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Dự án mộc gỗ</span>
+                            <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Công việc</span>
                             <span class="text-2xl font-extrabold text-slate-900 leading-none" id="kpi-tasks">...</span>
                         </div>
                     </div>
@@ -258,9 +258,9 @@
                     <!-- Activities & Logs -->
                     <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm lg:col-span-2 space-y-4">
                         <div class="flex justify-between items-center">
-                            <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest">Tiến trình cập nhật nhật nhật trình mới nhất</h3>
+                            <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest">Cập nhật báo cáo mới nhất</h3>
                             <button onclick="switchTab('logs')" class="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-0.5 cursor-pointer">
-                                <span>Xem toàn bộ nhật trình</span> <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                                <span>Xem toàn bộ báo cáo</span> <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
                             </button>
                         </div>
                         <div class="divide-y divide-slate-100 max-h-[380px] overflow-y-auto space-y-3 pr-2" id="dashboard-recent-logs-list">
@@ -276,7 +276,7 @@
                                 <i data-lucide="award" class="w-24 h-24"></i>
                             </div>
                             <div class="relative z-10 space-y-3">
-                                <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-300 block">Thợ mộc tiêu biểu trong tháng</span>
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-300 block">Nhân viên tiêu biểu trong tháng</span>
                                 <div class="flex items-center gap-3" id="best-performer-widget">
                                     <div class="animate-pulse bg-slate-800 w-10 h-10 rounded-full"></div>
                                     <div class="space-y-1">
@@ -300,7 +300,7 @@
                                 <button onclick="switchTab('tasks')" class="p-2.5 bg-slate-50 hover:bg-slate-100/80 transition-all rounded-xl border border-slate-150 text-left cursor-pointer">
                                     <i data-lucide="clipboard-list" class="w-4 h-4 text-slate-500 mb-1"></i>
                                     <span class="block text-[11px] font-bold text-slate-800">Giao việc mới</span>
-                                    <span class="text-[9px] text-slate-400">Chọn nhiều thợ</span>
+                                    <span class="text-[9px] text-slate-400">Chọn nhiều nhân viên</span>
                                 </button>
                                 <?php endif; ?>
                             </div>
@@ -316,7 +316,7 @@
                         <h1 class="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             <i data-lucide="users" class="text-indigo-600 w-6 h-6"></i> Quản Lý Hồ Sơ Nhân Sự
                         </h1>
-                        <p class="text-xs text-slate-500">Tổ chức danh sách thợ mộc, phân công chức trách chuyên môn và cấp quyền tùy biến.</p>
+                        <p class="text-xs text-slate-500">Tổ chức danh sách nhân sự, phân công chức trách chuyên môn và cấp quyền tùy biến.</p>
                     </div>
                     <button onclick="openStaffModal()" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer shadow-sm transition-all">
                         <i data-lucide="user-plus" class="w-4 h-4"></i> Thêm Nhân Sự Mới
@@ -326,7 +326,7 @@
                 <!-- Search box -->
                 <div class="flex bg-white items-center gap-2 px-3 py-2 border border-slate-200 rounded-xl max-w-sm shadow-sm">
                     <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
-                    <input type="text" id="staff-search" oninput="filterStaffTable()" placeholder="Nhập tên thợ hoặc điện thoại..." class="text-xs w-full bg-transparent focus:outline-none">
+                    <input type="text" id="staff-search" oninput="filterStaffTable()" placeholder="Nhập tên nhân viên hoặc điện thoại..." class="text-xs w-full bg-transparent focus:outline-none">
                 </div>
 
                 <!-- Staff Table -->
@@ -423,12 +423,12 @@
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h1 class="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                            <i data-lucide="clipboard-list" class="text-indigo-600 w-6 h-6"></i> Phân Công Dự Án & Timeline Lắp Đặt
+                            <i data-lucide="clipboard-list" class="text-indigo-600 w-6 h-6"></i> Phân Công Công Việc & Timeline
                         </h1>
-                        <p class="text-xs text-slate-500">Khởi tạo kế hoạch sản xuất mộc, chỉ định cấu trúc hạn ngày và **giao việc đồng thời cho một nhóm nhiều thợ**.</p>
+                        <p class="text-xs text-slate-500">Khởi tạo kế hoạch công việc, chỉ định thời hạn và **giao việc đồng thời cho một nhóm nhiều nhân viên**.</p>
                     </div>
                     <button onclick="openTaskModal()" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800  text-white text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer shadow-sm transition-all">
-                        <i data-lucide="plus" class="w-4 h-4"></i> Tạo Việc & Phân Thợ
+                        <i data-lucide="plus" class="w-4 h-4"></i> Tạo Việc & Phân Công
                     </button>
                 </div>
 
@@ -438,7 +438,7 @@
                     <div class="lg:col-span-2 space-y-4" id="tasks-timeline-container">
                         <!-- Loaded via JS dynamically -->
                         <div class="text-center py-10 bg-white border border-slate-200 rounded-2xl italic text-slate-400 text-xs">
-                            Đang kết nối danh sách việc thi công mộc...
+                            Đang kết nối danh sách công việc...
                         </div>
                     </div>
 
@@ -447,7 +447,7 @@
                         <div class="p-5 bg-white border border-slate-200 rounded-2xl shadow-sm space-y-4">
                             <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Lưu ý khi gán việc</h3>
                             <p class="text-xs text-slate-500 leading-relaxed">
-                                Bạn có thể gán nhiều thợ phụ và thợ cả vào cùng một sản phẩm đồ gỗ để họ phối hợp gọt đẽo và nộp báo cáo chung vào một nhật trình hoàn tât.
+                                Bạn có thể gán nhiều nhân viên vào cùng một công việc để họ phối hợp và nộp báo cáo chung theo tiến độ.
                             </p>
                         </div>
                     </div>
@@ -460,15 +460,15 @@
                     <div>
                         <h1 class="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             <i data-lucide="hammer" class="text-indigo-600 w-6 h-6"></i> 
-                            <span><?= $currentUser['role'] === 'staff' ? 'Báo Cáo Nhật Trình Ngày' : 'Duyệt Sản Lượng Tiến Độ Thợ' ?></span>
+                            <span><?= $currentUser['role'] === 'staff' ? 'Báo Cáo Công Việc Ngày' : 'Duyệt Tiến Độ Công Việc' ?></span>
                         </h1>
                         <p class="text-xs text-slate-500">
-                            <?= $currentUser['role'] === 'staff' ? 'Nhập ghi chú hàng ngày, báo cáo % mộc gỗ đã thi công kèm ảnh thực tế dâng lên quản đốc.' : 'Khảo sát xem xét chất lượng đẽo phôi mộc gỗ thực tế của từng thợ để duyệt điểm năng lực.' ?>
+                            <?= $currentUser['role'] === 'staff' ? 'Nhập ghi chú hằng ngày, báo cáo % hoàn thành kèm ảnh minh chứng gửi quản lý.' : 'Xem xét chất lượng và tiến độ thực tế của từng nhân viên để duyệt báo cáo.' ?>
                         </p>
                     </div>
                     <?php if($currentUser['role'] === 'staff'): ?>
                     <button onclick="openSubmitLogModal()" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer shadow-sm transition-all">
-                        <i data-lucide="plus" class="w-4 h-4"></i> Viết Nhật Trình Hôm Nay
+                        <i data-lucide="plus" class="w-4 h-4"></i> Viết Báo Cáo Hôm Nay
                     </button>
                     <?php endif; ?>
                 </div>
@@ -503,9 +503,9 @@
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                     <div>
                         <h1 class="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                            <i data-lucide="bar-chart-3" class="text-indigo-600 w-6 h-6"></i> Thống Kê Hiệu Suất Sản Lượng Gần Thực Tế
+                            <i data-lucide="bar-chart-3" class="text-indigo-600 w-6 h-6"></i> Thống Kê Hiệu Suất Công Việc
                         </h1>
-                        <p class="text-xs text-slate-500">Tính toán điểm tích lũy lũy tiến công việc đã qua chất chuẩn của thợ mộc.</p>
+                        <p class="text-xs text-slate-500">Tính toán hiệu suất tích lũy dựa trên công việc đã được duyệt.</p>
                     </div>
                     <button onclick="window.print()" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer shadow-sm transition-all no-print">
                         <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> In Báo Cáo PDF
@@ -518,14 +518,14 @@
                     <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
                         <div class="border-b border-slate-100 pb-2">
                             <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest flex items-center gap-1">
-                                <i data-lucide="award" class="w-4 h-4 text-amber-500"></i> BẢNG XẾP HẠNG NĂNG SUẤT ĐÓNG GỖ THÔNG QUA TÍCH ĐIỂM
+                                <i data-lucide="award" class="w-4 h-4 text-amber-500"></i> BẢNG XẾP HẠNG HIỆU SUẤT THEO TÍCH ĐIỂM
                             </h3>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-xs">
                                 <thead>
                                     <tr class="bg-slate-50 text-slate-400 uppercase tracking-wider text-[9px] font-bold border-b border-slate-100">
-                                        <th class="py-2 px-3">Hạng / Thợ mộc</th>
+                                        <th class="py-2 px-3">Hạng / Nhân viên</th>
                                         <th class="py-2 px-3 text-center">Đầu việc gán</th>
                                         <th class="py-2 px-3 text-center">Báo cáo ngày chuẩn</th>
                                         <th class="py-2 px-3 text-right">Tổng tiến độ tích</th>
@@ -561,7 +561,7 @@
         <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 p-6 space-y-5 animate-in fade-in duration-200">
             <div class="flex justify-between items-center pb-3 border-b border-slate-150">
                 <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
-                    <i data-lucide="user-plus" class="text-indigo-600 w-5 h-5"></i> <span id="staff-modal-title">Thêm Hồ Sơ Thợ Mộc</span>
+                    <i data-lucide="user-plus" class="text-indigo-600 w-5 h-5"></i> <span id="staff-modal-title">Thêm Hồ Sơ Nhân Viên</span>
                 </h3>
                 <button onclick="closeStaffModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
@@ -583,8 +583,8 @@
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Họ tên thợ <span class="text-rose-500">*</span></label>
-                        <input type="text" id="staff-name" required placeholder="Ví dụ: Phạm Văn Mộc" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Họ tên nhân viên <span class="text-rose-500">*</span></label>
+                        <input type="text" id="staff-name" required placeholder="Ví dụ: Nguyễn Văn A" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Số điện thoại <span class="text-rose-500">*</span></label>
@@ -612,13 +612,13 @@
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Vai Trò Hệ Thống <span class="text-rose-500">*</span></label>
                         <select id="staff-role" onchange="adjustPermissionCheckboxesByRole()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
-                            <option value="staff">Thợ sản xuất phụ trợ (Staff)</option>
-                            <option value="manager">Quản lý sản xuất xưởng (Manager)</option>
+                            <option value="staff">Nhân viên thực thi (Staff)</option>
+                            <option value="manager">Quản lý điều phối (Manager)</option>
                             <option value="admin">Quản trị viên tối cao (Admin)</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Chức vụ phụ trách mộc</label>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Chức vụ phụ trách</label>
                         <select id="staff-position-id" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
                             <option value="">Không phân chức vị</option>
                             <?php foreach($positions as $pos): ?>
@@ -653,7 +653,7 @@
         <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 p-6 space-y-5 animate-in fade-in duration-200">
             <div class="flex justify-between items-center pb-3 border-b border-slate-150">
                 <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
-                    <i data-lucide="clipboard-list" class="text-indigo-600 w-5 h-5"></i> <span id="task-modal-title">Tạo Việc Mới & Chỉ Định Thợ</span>
+                    <i data-lucide="clipboard-list" class="text-indigo-600 w-5 h-5"></i> <span id="task-modal-title">Tạo Việc Mới & Chỉ Định Nhân Viên</span>
                 </h3>
                 <button onclick="closeTaskModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
@@ -663,7 +663,7 @@
 
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tên công việc / Dự án gỗ mỹ nghệ <span class="text-rose-500">*</span></label>
-                    <input type="text" id="task-title" required placeholder="Góc mộc tủ bếp, làm bóng bình vân gỗ..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
+                    <input type="text" id="task-title" required placeholder="Ví dụ: Chuẩn bị báo cáo tháng, cập nhật hợp đồng..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -678,7 +678,7 @@
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Trạng thái hiện thời</label>
                         <select id="task-status" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
-                            <option value="pending">Chuẩn bị phôi (Pending)</option>
+                            <option value="pending">Chờ bắt đầu (Pending)</option>
                             <option value="in_progress">Ghé ráp thi công (In Progress)</option>
                             <option value="completed">Từ giã bàn giao (Completed)</option>
                         </select>
@@ -691,18 +691,18 @@
                         <input type="date" id="task-start-date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Hạn định mộc gỗ <span class="text-rose-500">*</span></label>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Hạn hoàn thành <span class="text-rose-500">*</span></label>
                         <input type="date" id="task-end-date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Mô tả quy cách, thông số chi tiết của sản phẩm</label>
-                    <textarea id="task-description" rows="3" placeholder="Sản phẩm mộc tủ gỗ sồi, mép gỗ mài bóng PU..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none"></textarea>
+                    <textarea id="task-description" rows="3" placeholder="Mô tả chi tiết nhiệm vụ, đầu ra, phạm vi phụ trách..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none"></textarea>
                 </div>
 
                 <div class="bg-slate-50 p-4 border border-slate-150 rounded-xl space-y-2">
-                    <span class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Chỉ định nhóm thợ thi công đồng thời (Chọn nhiều thợ)</span>
+                    <span class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Chỉ định nhóm nhân viên thực hiện (Chọn nhiều người)</span>
                     <div id="workers-selection-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[160px] overflow-y-auto text-xs text-slate-700 pr-1">
                         <!-- Dynamically populated via staff users loaded in memory -->
                     </div>
@@ -721,7 +721,7 @@
         <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 p-6 space-y-5 animate-in fade-in duration-200">
             <div class="flex justify-between items-center pb-3 border-b border-slate-150">
                 <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
-                    <i data-lucide="plus" class="text-indigo-600 w-5 h-5"></i> <span>Ghi Báo Cáo Nhật Trình Mộc</span>
+                    <i data-lucide="plus" class="text-indigo-600 w-5 h-5"></i> <span>Ghi Báo Cáo Công Việc</span>
                 </h3>
                 <button onclick="closeSubmitLogModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
@@ -749,12 +749,12 @@
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Đăng ảnh hiện trường phôi mộc gỗ thực tế <span class="text-rose-500">*</span></label>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Đăng ảnh minh chứng thực tế <span class="text-rose-500">*</span></label>
                     <input type="file" id="log-image" accept="image/png, image/jpeg, image/jpg" class="hidden" onchange="previewSelectedImage(event)">
                     <div onclick="document.getElementById('log-image').click()" class="border-2 border-dashed border-slate-200 hover:border-slate-400 bg-slate-50 rounded-2xl p-6 text-center cursor-pointer transition-all space-y-2">
                         <i data-lucide="image" class="w-8 h-8 text-slate-400 mx-auto"></i>
                         <span class="block text-xs font-bold text-slate-500">Ấn để chọn ảnh hoặc kéo thả vào đây</span>
-                        <span class="text-[9px] text-slate-400">Yêu cầu ảnh JPG/PNG mặt cắt đẽo phoi dăm mộc mạc</span>
+                        <span class="text-[9px] text-slate-400">Yêu cầu ảnh JPG/PNG rõ nội dung công việc</span>
                         <div id="image-upload-preview-container" class="hidden pt-2">
                             <img id="image-upload-preview" src="#" alt="Xem trước" class="max-h-[140px] rounded-xl mx-auto border border-slate-200 shadow-sm">
                         </div>
@@ -762,13 +762,13 @@
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Chú thích chi tiết công việc mộc hôm nay <span class="text-rose-500">*</span></label>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Chú thích chi tiết công việc hôm nay <span class="text-rose-500">*</span></label>
                     <textarea id="log-notes" rows="3" required placeholder="Ghi chú rõ thớ thớ thạch gỗ đắp mịn sơn thế nào..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-slate-900 focus:outline-none"></textarea>
                 </div>
 
                 <div class="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
                     <button type="button" onclick="closeSubmitLogModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-bold text-slate-700 cursor-pointer">Bỏ qua</button>
-                    <button type="submit" id="btn-log-submit" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm cursor-pointer">Nộp nhật trình</button>
+                    <button type="submit" id="btn-log-submit" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm cursor-pointer">Nộp báo cáo</button>
                 </div>
             </form>
         </div>
@@ -878,7 +878,7 @@
 
     <footer class="bg-slate-900 text-slate-500 py-6 border-t border-slate-800 text-center text-xs mt-auto no-print">
         <p class="flex items-center justify-center gap-1">
-            Thiết kế bởi hệ thống <span class="font-semibold text-slate-300">Quản Lý Nhân Sự & Công Việc Mộc Việt Co., Ltd</span> 
+            Thiết kế bởi hệ thống <span class="font-semibold text-slate-300">Quản Lý Nhân Sự & Công Việc Doanh Nghiệp</span> 
         </p>
         <p class="text-[10px] mt-1 text-slate-600 font-mono">
             Vận Hành Hiệu Quả Trên Nền Tảng Pure CodeIgniter 4 MVC Backend • PHP Core Native
@@ -1003,7 +1003,7 @@
         function renderDashboardMetrics() {
             if (!cacheStats) return;
             const s = cacheStats.summary;
-            document.getElementById('kpi-staff').innerText = s.totalStaff + ' thợ';
+            document.getElementById('kpi-staff').innerText = s.totalStaff + ' người';
             document.getElementById('kpi-tasks').innerText = s.totalTasks + ' việc';
             document.getElementById('kpi-active-tasks').innerText = s.inProgressTasks + ' việc';
             document.getElementById('kpi-done-tasks').innerText = s.completedTasks + ' việc';
@@ -1019,7 +1019,7 @@
                         <img src="${top.avatar}" alt="Top worker" class="w-11 h-11 rounded-full object-cover border-2 border-indigo-500/50">
                         <div>
                             <h4 class="font-bold text-sm text-slate-100">${top.name}</h4>
-                            <span class="block text-[10px] text-amber-300 font-bold uppercase tracking-wider">Tích lũy ${top.totalProgressPoints}% điểm mộc</span>
+                            <span class="block text-[10px] text-amber-300 font-bold uppercase tracking-wider">Tích lũy ${top.totalProgressPoints}% tiến độ</span>
                         </div>
                     `;
                 }
@@ -1030,7 +1030,7 @@
             // Recent logs inline feed
             const container = document.getElementById('dashboard-recent-logs-list');
             if (cacheLogs.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-400 italic text-center py-6">Chưa có nhật trình nào được trình dâng hôm nay.</p>`;
+                container.innerHTML = `<p class="text-xs text-slate-400 italic text-center py-6">Chưa có báo cáo nào được gửi hôm nay.</p>`;
                 return;
             }
 
@@ -1071,20 +1071,20 @@
             tbody.innerHTML = '';
 
             if (cacheStaff.length === 0) {
-                tbody.innerHTML = `<tr><td colSpan="6" class="text-center py-10 text-slate-400 italic">Không tìm thấy thợ mộc nào.</td></tr>`;
+                tbody.innerHTML = `<tr><td colSpan="6" class="text-center py-10 text-slate-400 italic">Không tìm thấy nhân sự nào.</td></tr>`;
                 return;
             }
 
             cacheStaff.forEach(user => {
                 // Role translation
                 let roleBadge = "bg-blue-50 text-blue-700";
-                let roleName = "Thợ đóng mộc";
+                let roleName = "Nhân viên";
                 if(user.role === 'admin') {
                     roleBadge = "bg-rose-50 text-rose-700";
                     roleName = "Quản trị tối cao";
                 } else if(user.role === 'manager') {
                     roleBadge = "bg-amber-50 text-amber-700";
-                    roleName = "Quản đốc xưởng";
+                    roleName = "Quản lý";
                 }
 
                 // Render options buttons based on admin/permission
@@ -1143,7 +1143,7 @@
 
         function openStaffModal() {
             document.getElementById('staff-modal').classList.remove('hidden');
-            document.getElementById('staff-modal-title').innerText = "Thêm Hồ Sơ Thợ Mộc";
+            document.getElementById('staff-modal-title').innerText = "Thêm Hồ Sơ Nhân Viên";
             document.getElementById('staff-edit-id').value = '';
             document.getElementById('staff-form').reset();
             document.getElementById('pwd-required-star').style.display = 'inline';
@@ -1285,7 +1285,7 @@
                 const resData = await response.json();
 
                 if (response.ok) {
-                    showToast("success", "Lưu thông số", editId ? "Cập nhật hồ sơ thợ mộc thành công!" : "Ghi nhận tuyển mới thợ mộc thành sự thực.");
+                    showToast("success", "Lưu thông số", editId ? "Cập nhật hồ sơ nhân viên thành công!" : "Thêm mới hồ sơ nhân viên thành công.");
                     closeStaffModal();
                     syncData();
                 } else {
@@ -1302,7 +1302,7 @@
             if (!user) return;
 
             openStaffModal();
-            document.getElementById('staff-modal-title').innerText = "Hiệu Chỉnh Hồ Sơ Thợ: " + user.name;
+            document.getElementById('staff-modal-title').innerText = "Hiệu Chỉnh Hồ Sơ Nhân Viên: " + user.name;
             document.getElementById('staff-edit-id').value = user.id;
 
             document.getElementById('staff-name').value = user.name;
@@ -1322,7 +1322,7 @@
         }
 
         async function deleteStaff(userId) {
-            if (!confirm("Bạn có tin chắc muốn rút hồ sơ thợ mộc này khỏi cơ sở dữ liệu hành chính?")) return;
+            if (!confirm("Bạn có chắc muốn xóa hồ sơ nhân viên này khỏi hệ thống?")) return;
 
             try {
                 const response = await fetch('<?= base_url('api/users') ?>/' + userId, {
@@ -1330,7 +1330,7 @@
                 });
 
                 if (response.ok) {
-                    showToast("success", "Đã xóa thợ", "Bảo hộ lao động đã gỡ hồ sơ nhân vật này thành công.");
+                    showToast("success", "Đã xóa nhân sự", "Hồ sơ nhân viên đã được gỡ khỏi hệ thống.");
                     syncData();
                 } else {
                     showToast("alarm", "Lỗi thi hành", "Không có quyền gỡ bỏ hoặc ràng buộc dữ liệu.");
@@ -1382,13 +1382,13 @@
                             <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mr-1">Tổ phụ trách:</span>
                             <div class="flex -space-x-2 overflow-hidden">
                                 ${assignees.map(u => `
-                                    <img src="${u.avatar}" alt="${u.name}" class="inline-block h-6 w-6 rounded-full object-cover ring-2 ring-white" title="${u.name} (${u.position_name || 'Thợ mộc'})">
+                                    <img src="${u.avatar}" alt="${u.name}" class="inline-block h-6 w-6 rounded-full object-cover ring-2 ring-white" title="${u.name} (${u.position_name || 'Nhân viên'})">
                                 `).join('')}
                             </div>
                         </div>
                     `;
                 } else {
-                    assignedGridHTML = `<span class="text-[10px] text-amber-600 font-medium italic">Chưa giao cho thợ nào</span>`;
+                    assignedGridHTML = `<span class="text-[10px] text-amber-600 font-medium italic">Chưa giao cho nhân viên nào</span>`;
                 }
 
                 // Create Task visual block
@@ -1407,7 +1407,7 @@
                 div.innerHTML = `
                     <div class="flex justify-between items-start gap-3">
                         <div>
-                            <span class="bg-indigo-50 text-indigo-700 border border-indigo-100 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md">${task.job_category_name || 'Đóng mộc'}</span>
+                            <span class="bg-indigo-50 text-indigo-700 border border-indigo-100 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md">${task.job_category_name || 'Công việc chung'}</span>
                             <h3 class="text-sm font-bold text-slate-900 mt-1.5">${task.title}</h3>
                             <p class="text-[10px] text-slate-400 font-mono mt-0.5">Ngày chạy: ${task.start_date} ~ Hạn định: ${task.end_date}</p>
                         </div>
@@ -1510,7 +1510,7 @@
 
             const subStaff = cacheStaff.filter(u => u.role === 'staff');
             if (subStaff.length === 0) {
-                container.innerHTML = `<span class="text-slate-400 text-xs italic">Hãy đăng tuyển hồ sơ thợ phụ trước.</span>`;
+                container.innerHTML = `<span class="text-slate-400 text-xs italic">Hãy thêm hồ sơ nhân viên trước.</span>`;
                 return;
             }
 
@@ -1520,7 +1520,7 @@
                 label.innerHTML = `
                     <input type="checkbox" name="assignees" value="${user.id}" class="rounded text-slate-900 focus:ring-0">
                     <img src="${user.avatar}" alt="Avatar" class="w-5 h-5 rounded-full object-cover">
-                    <span>${user.name} <small class="text-slate-400">(${user.position_name || 'Thợ mộc'})</small></span>
+                    <span>${user.name} <small class="text-slate-400">(${user.position_name || 'Nhân viên'})</small></span>
                 `;
                 container.appendChild(label);
             });
@@ -1528,7 +1528,7 @@
 
         function openTaskModal() {
             document.getElementById('task-modal').classList.remove('hidden');
-            document.getElementById('task-modal-title').innerText = "Tạo Việc Mới & Chỉ Định Thợ";
+            document.getElementById('task-modal-title').innerText = "Tạo Việc Mới & Chỉ Định Nhân Viên";
             document.getElementById('task-edit-id').value = '';
             document.getElementById('task-form').reset();
             
@@ -1573,7 +1573,7 @@
                 });
 
                 if (response.ok) {
-                    showToast("success", "Kế hoạch cập nhật", editId ? "Đã lưu vết chỉnh sửa dự án mộc!" : "Phân công tổ thêu ráp mộc thành công.");
+                    showToast("success", "Kế hoạch cập nhật", editId ? "Đã lưu chỉnh sửa công việc!" : "Phân công công việc thành công.");
                     closeTaskModal();
                     syncData();
                 } else {
@@ -1589,7 +1589,7 @@
             if (!task) return;
 
             openTaskModal();
-            document.getElementById('task-modal-title').innerText = "Cập nhật dự án mộc: " + task.title;
+            document.getElementById('task-modal-title').innerText = "Cập nhật công việc: " + task.title;
             document.getElementById('task-edit-id').value = task.id;
 
             document.getElementById('task-title').value = task.title;
@@ -1607,7 +1607,7 @@
         }
 
         async function deleteTask(taskId) {
-            if(!confirm("Bạn có chắc muốn hủy bỏ đầu việc này? Việc này sẽ gỡ thợ tương ứng.")) return;
+            if(!confirm("Bạn có chắc muốn hủy bỏ đầu việc này? Việc này sẽ gỡ nhân sự đã phân công.")) return;
 
             try {
                 const response = await fetch('<?= base_url('api/tasks') ?>/' + taskId, {
@@ -1641,7 +1641,7 @@
             if (displayLogs.length === 0) {
                 container.innerHTML = `
                     <div class="text-center py-12 bg-white border border-slate-200 rounded-2xl italic text-slate-400 text-xs">
-                        Chưa có lượt nhật báo cáo nhật nhật trình nào lọt vào bộ lọc này.
+                        Chưa có báo cáo nào phù hợp bộ lọc này.
                     </div>
                 `;
                 return;
@@ -1695,7 +1695,7 @@
                                 <span class="px-2 py-0.5 rounded-md border text-[9px] font-bold uppercase shrink-0 ${statusBadge}">${statusName}</span>
                             </div>
 
-                            <p class="text-[11px] font-extrabold text-slate-500">Dự án mộc: <span class="text-slate-800">${log.task_title}</span></p>
+                            <p class="text-[11px] font-extrabold text-slate-500">Công việc: <span class="text-slate-800">${log.task_title}</span></p>
                             <p class="text-xs text-slate-600 leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-150">${log.notes}</p>
                             
                             ${log.status === 'approved' && log.approver_name ? `
@@ -1727,7 +1727,7 @@
             }
 
             cacheTasks.forEach(task => {
-                select.innerHTML += `<option value="${task.id}">${task.title} [${task.job_category_name || 'Mộc'}]</option>`;
+                select.innerHTML += `<option value="${task.id}">${task.title} [${task.job_category_name || 'Chung'}]</option>`;
             });
         }
 
@@ -1927,7 +1927,7 @@
             event.preventDefault();
             const btnSubmit = document.getElementById('btn-log-submit');
             btnSubmit.disabled = true;
-            btnSubmit.innerText = "ĐANG TẢI BÁO CÁO MỘC...";
+            btnSubmit.innerText = "ĐANG GỬI BÁO CÁO...";
 
             const task_id = document.getElementById('log-task-id').value;
             const progress_percent = Number(document.getElementById('log-progress-slider').value);
@@ -1957,18 +1957,18 @@
                 const r = await response.json();
 
                 if (response.ok) {
-                    showToast("success", "Nộp thành công", "Sản lượng nhật trình gỗ đã gửi lên máy chủ và được chấp thuận!");
+                    showToast("success", "Nộp thành công", "Báo cáo công việc đã gửi lên máy chủ thành công.");
                     closeSubmitLogModal();
                     syncData();
                 } else {
-                    showToast("alarm", "Lỗi dữ liệu", r.error || "Gửi nhật trình thất bại");
+                    showToast("alarm", "Lỗi dữ liệu", r.error || "Gửi báo cáo thất bại");
                 }
             } catch (err) {
                 console.error(err);
-                showToast("alarm", "Lỗi kết nối", "Không thể gửi dữ liệu nhật trình.");
+                showToast("alarm", "Lỗi kết nối", "Không thể gửi dữ liệu báo cáo.");
             } finally {
                 btnSubmit.disabled = false;
-                btnSubmit.innerText = "Nộp nhật trình";
+                btnSubmit.innerText = "Nộp báo cáo";
             }
         }
 
@@ -2007,16 +2007,16 @@
             const productivity = cacheStats.employeeProductivity || [];
 
             if (productivity.length === 0) {
-                tbody.innerHTML = `<tr><td colSpan="4" class="py-6 text-center text-slate-400 italic">Chưa phát hiện nhật trình hoạt động tích lũy</td></tr>`;
+                tbody.innerHTML = `<tr><td colSpan="4" class="py-6 text-center text-slate-400 italic">Chưa phát hiện dữ liệu hoạt động tích lũy</td></tr>`;
             } else {
                 productivity.forEach((emp, index) => {
-                    let rating = "Thợ Khá";
+                    let rating = "Nhân viên khá";
                     let ratingStyle = "bg-blue-50 text-blue-700";
                     if (emp.totalProgressPoints >= 105) {
-                        rating = "Mộc Tinh Xảo";
+                        rating = "Hiệu suất cao";
                         ratingStyle = "bg-emerald-50 text-emerald-700";
                     } else if (emp.totalProgressPoints < 40) {
-                        rating = "Thợ Phụ Cơ Bản";
+                        rating = "Mức cơ bản";
                         ratingStyle = "bg-rose-50 text-rose-700";
                     }
 
@@ -2032,7 +2032,7 @@
                             </div>
                         </td>
                         <td class="py-3 px-3 text-center text-slate-700 font-bold">${emp.assignedTasksCount} dự án</td>
-                        <td class="py-3 px-3 text-center text-slate-500">${emp.approvedLogsCount} lượt thợ</td>
+                        <td class="py-3 px-3 text-center text-slate-500">${emp.approvedLogsCount} lượt báo cáo</td>
                         <td class="py-3 px-3 text-right text-slate-950 font-mono font-bold">${emp.totalProgressPoints}% IDP</td>
                     `;
                     tbody.appendChild(tr);
