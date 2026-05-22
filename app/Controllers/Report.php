@@ -76,94 +76,181 @@ class Report extends ResourceController
         return false;
     }
 
-    /**
-     * Tổng hợp dữ liệu thống kê sản lượng năng suất đồ gỗ và bảng xếp hạng thợ mộc
-     */
-    public function getPerformanceSummary()
+    private function parseDateParam(string $key): ?string
     {
-        $currentUser = $this->getCurrentUser();
-        if (!$currentUser) {
-            return $this->failUnauthorized('Vui lòng đăng nhập lại');
+        $value = trim((string) ($this->request->getGet($key) ?? ''));
+        if ($value === '') {
+            return null;
         }
+
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            return null;
+        }
+
+        return $value;
+    }
+
+    private function normalizeDateRange(?string $fromDate, ?string $toDate): array
+    {
+        if ($fromDate && $toDate && $fromDate > $toDate) {
+            return [$toDate, $fromDate];
+        }
+
+        return [$fromDate, $toDate];
+    }
+
+    private function isDateInRange(?string $date, ?string $fromDate, ?string $toDate): bool
+    {
+        if (!$date) {
+            return false;
+        }
+
+        if ($fromDate && $date < $fromDate) {
+            return false;
+        }
+        if ($toDate && $date > $toDate) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function isTaskOverlappingRange(array $task, ?string $fromDate, ?string $toDate): bool
+    {
+        if (!$fromDate && !$toDate) {
+            return true;
+        }
+
+        $start = (string) ($task['start_date'] ?? '');
+        $end = (string) ($task['end_date'] ?? '');
+        if ($start === '' || $end === '') {
+            return false;
+        }
+
+        if ($fromDate && $toDate) {
+            return !($start > $toDate || $end < $fromDate);
+        }
+        if ($fromDate) {
+            return $end >= $fromDate;
+        }
+
+        return $start <= (string) $toDate;
+    }
+
+    private function buildPerformanceData(array $currentUser, ?string $fromDate, ?string $toDate): array
+    {
+        [$fromDate, $toDate] = $this->normalizeDateRange($fromDate, $toDate);
 
         $userModel = new PersonnelModel();
         $taskModel = new TaskModel();
         $logModel = new DailyProgressLogModel();
+        $db = \Config\Database::connect();
 
-        // Chạy auto-approve các log cũ trước khi kết xuất báo cáo năng lực
         $logModel->autoApproveOldLogs();
 
         if (!$this->canViewAllData($currentUser)) {
             $visibleTasks = $taskModel->getDetailedTask();
-            $visibleTasks = array_values(array_filter($visibleTasks, function ($task) use ($currentUser) {
-                return $this->isTaskAssignedToUser($task, (string) ($currentUser['id'] ?? ''));
+            $visibleTasks = array_values(array_filter($visibleTasks, function ($task) use ($currentUser, $fromDate, $toDate) {
+                return $this->isTaskAssignedToUser($task, (string) ($currentUser['id'] ?? ''))
+                    && $this->isTaskOverlappingRange($task, $fromDate, $toDate);
             }));
-
-            $visibleAssigneeIds = [];
-            foreach ($visibleTasks as $task) {
-                foreach ($task['assigned_users'] ?? [] as $assignee) {
-                    if (!empty($assignee['id'])) {
-                        $visibleAssigneeIds[$assignee['id']] = true;
-                    }
-                }
-            }
 
             $ownLogs = $logModel->getDetailedLogs(null, $currentUser['id'] ?? null);
-            $approvedOwnLogs = array_values(array_filter($ownLogs, function ($log) {
-                return ($log['status'] ?? '') === 'approved';
+            $approvedOwnLogs = array_values(array_filter($ownLogs, function ($log) use ($fromDate, $toDate) {
+                return ($log['status'] ?? '') === 'approved'
+                    && $this->isDateInRange((string) ($log['date'] ?? ''), $fromDate, $toDate);
             }));
 
-            $summary = [
-                'totalStaff' => count($visibleAssigneeIds),
-                'totalTasks' => count($visibleTasks),
-                'pendingTasks' => count(array_filter($visibleTasks, fn($task) => ($task['status'] ?? '') === 'pending')),
-                'inProgressTasks' => count(array_filter($visibleTasks, fn($task) => ($task['status'] ?? '') === 'in_progress')),
-                'completedTasks' => count(array_filter($visibleTasks, fn($task) => ($task['status'] ?? '') === 'completed')),
+            $personalSummary = [
+                'assignedTasksCount' => count($visibleTasks),
+                'approvedLogsCount' => count($approvedOwnLogs),
+                'totalProgressPoints' => $this->calculateDeltaPoints($approvedOwnLogs),
             ];
 
             $employeeProductivity = [[
                 'userId' => $currentUser['id'] ?? '',
                 'name' => $currentUser['name'] ?? '',
                 'avatar' => $currentUser['avatar'] ?? '',
-                'assignedTasksCount' => count($visibleTasks),
-                'approvedLogsCount' => count($approvedOwnLogs),
-                'totalProgressPoints' => $this->calculateDeltaPoints($approvedOwnLogs),
+                'assignedTasksCount' => $personalSummary['assignedTasksCount'],
+                'approvedLogsCount' => $personalSummary['approvedLogsCount'],
+                'totalProgressPoints' => $personalSummary['totalProgressPoints'],
             ]];
 
-            return $this->respond([
-                'summary' => $summary,
+            $taskProgressList = [];
+            foreach ($visibleTasks as $task) {
+                $taskId = (string) ($task['id'] ?? '');
+                if ($taskId === '') {
+                    continue;
+                }
+
+                $taskApprovedLogs = array_values(array_filter($approvedOwnLogs, static function ($log) use ($taskId) {
+                    return (string) ($log['task_id'] ?? '') === $taskId;
+                }));
+
+                $progress = 0;
+                if (!empty($taskApprovedLogs)) {
+                    $progress = max(array_map(static fn($log) => (int) ($log['progress_percent'] ?? 0), $taskApprovedLogs));
+                }
+
+                $taskProgressList[] = [
+                    'id' => $taskId,
+                    'title' => $task['title'] ?? 'Không tên',
+                    'startDate' => $task['start_date'] ?? '',
+                    'endDate' => $task['end_date'] ?? '',
+                    'status' => $task['status'] ?? 'pending',
+                    'progress' => $progress,
+                ];
+            }
+
+            return [
+                'summary' => [
+                    'totalStaff' => 1,
+                    'totalTasks' => count($visibleTasks),
+                    'pendingTasks' => count(array_filter($visibleTasks, static fn($task) => ($task['status'] ?? '') === 'pending')),
+                    'inProgressTasks' => count(array_filter($visibleTasks, static fn($task) => ($task['status'] ?? '') === 'in_progress')),
+                    'completedTasks' => count(array_filter($visibleTasks, static fn($task) => ($task['status'] ?? '') === 'completed')),
+                ],
                 'employeeProductivity' => $employeeProductivity,
-            ]);
+                'personalSummary' => $personalSummary,
+                'taskProgressList' => $taskProgressList,
+                'reportRange' => [
+                    'fromDate' => $fromDate,
+                    'toDate' => $toDate,
+                ],
+            ];
         }
 
-        $db = \Config\Database::connect();
         $allTasks = $taskModel->getDetailedTask();
+        $filteredTasks = array_values(array_filter($allTasks, function ($task) use ($fromDate, $toDate) {
+            return $this->isTaskOverlappingRange($task, $fromDate, $toDate);
+        }));
+
         $allLogs = $logModel->getDetailedLogs();
+        $approvedLogs = array_values(array_filter($allLogs, function ($log) use ($fromDate, $toDate) {
+            return ($log['status'] ?? '') === 'approved'
+                && $this->isDateInRange((string) ($log['date'] ?? ''), $fromDate, $toDate);
+        }));
 
         $staffUsers = $userModel->where('role', 'staff')->findAll();
-        $totalStaff = count($staffUsers);
-        $totalTasks = count($allTasks);
-        $pendingTasks = count(array_filter($allTasks, static fn($task) => ($task['status'] ?? '') === 'pending'));
-        $inProgressTasks = count(array_filter($allTasks, static fn($task) => ($task['status'] ?? '') === 'in_progress'));
-        $completedTasks = count(array_filter($allTasks, static fn($task) => ($task['status'] ?? '') === 'completed'));
 
-        $assignedRows = $db->table('task_assignments')
-            ->select('user_id, COUNT(DISTINCT task_id) as assigned_tasks_count')
-            ->groupBy('user_id')
-            ->get()
-            ->getResultArray();
+        $assignedTaskSetByUser = [];
+        foreach ($filteredTasks as $task) {
+            $taskId = (string) ($task['id'] ?? '');
+            foreach ($task['assigned_users'] ?? [] as $assignee) {
+                $userId = (string) ($assignee['id'] ?? '');
+                if ($userId === '' || $taskId === '') {
+                    continue;
+                }
 
-        $assignedCountByUser = [];
-        foreach ($assignedRows as $row) {
-            $assignedCountByUser[(string) ($row['user_id'] ?? '')] = (int) ($row['assigned_tasks_count'] ?? 0);
+                if (!isset($assignedTaskSetByUser[$userId])) {
+                    $assignedTaskSetByUser[$userId] = [];
+                }
+                $assignedTaskSetByUser[$userId][$taskId] = true;
+            }
         }
 
         $approvedLogsByUser = [];
-        foreach ($allLogs as $log) {
-            if (($log['status'] ?? '') !== 'approved') {
-                continue;
-            }
-
+        foreach ($approvedLogs as $log) {
             $userId = (string) ($log['user_id'] ?? '');
             if ($userId === '') {
                 continue;
@@ -178,15 +265,16 @@ class Report extends ResourceController
         $employeeProductivity = [];
         foreach ($staffUsers as $staff) {
             $userId = (string) ($staff['id'] ?? '');
-            $approvedLogs = $approvedLogsByUser[$userId] ?? [];
+            $userApprovedLogs = $approvedLogsByUser[$userId] ?? [];
+            $assignedTasksCount = isset($assignedTaskSetByUser[$userId]) ? count($assignedTaskSetByUser[$userId]) : 0;
 
             $employeeProductivity[] = [
                 'userId' => $userId,
                 'name' => $staff['name'] ?? '',
                 'avatar' => $staff['avatar'] ?? '',
-                'assignedTasksCount' => $assignedCountByUser[$userId] ?? 0,
-                'approvedLogsCount' => count($approvedLogs),
-                'totalProgressPoints' => $this->calculateDeltaPoints($approvedLogs),
+                'assignedTasksCount' => $assignedTasksCount,
+                'approvedLogsCount' => count($userApprovedLogs),
+                'totalProgressPoints' => $this->calculateDeltaPoints($userApprovedLogs),
             ];
         }
 
@@ -194,15 +282,126 @@ class Report extends ResourceController
             return ((int) ($b['totalProgressPoints'] ?? 0)) <=> ((int) ($a['totalProgressPoints'] ?? 0));
         });
 
-        return $this->respond([
+        $totalSystemPoints = array_sum(array_map(static fn($row) => (int) ($row['totalProgressPoints'] ?? 0), $employeeProductivity));
+        $personalSummary = [
+            'assignedTasksCount' => count($filteredTasks),
+            'approvedLogsCount' => count($approvedLogs),
+            'totalProgressPoints' => (int) $totalSystemPoints,
+        ];
+
+        $taskProgressList = [];
+        foreach ($filteredTasks as $task) {
+            $taskId = (string) ($task['id'] ?? '');
+            $taskApprovedLogs = array_values(array_filter($approvedLogs, static function ($log) use ($taskId) {
+                return (string) ($log['task_id'] ?? '') === $taskId;
+            }));
+
+            $progress = 0;
+            if (!empty($taskApprovedLogs)) {
+                $progress = max(array_map(static fn($log) => (int) ($log['progress_percent'] ?? 0), $taskApprovedLogs));
+            }
+
+            $taskProgressList[] = [
+                'id' => $taskId,
+                'title' => $task['title'] ?? 'Không tên',
+                'startDate' => $task['start_date'] ?? '',
+                'endDate' => $task['end_date'] ?? '',
+                'status' => $task['status'] ?? 'pending',
+                'progress' => $progress,
+            ];
+        }
+
+        return [
             'summary' => [
-                'totalStaff' => $totalStaff,
-                'totalTasks' => $totalTasks,
-                'pendingTasks' => $pendingTasks,
-                'inProgressTasks' => $inProgressTasks,
-                'completedTasks' => $completedTasks
+                'totalStaff' => count($staffUsers),
+                'totalTasks' => count($filteredTasks),
+                'pendingTasks' => count(array_filter($filteredTasks, static fn($task) => ($task['status'] ?? '') === 'pending')),
+                'inProgressTasks' => count(array_filter($filteredTasks, static fn($task) => ($task['status'] ?? '') === 'in_progress')),
+                'completedTasks' => count(array_filter($filteredTasks, static fn($task) => ($task['status'] ?? '') === 'completed')),
             ],
-            'employeeProductivity' => $employeeProductivity
-        ]);
+            'employeeProductivity' => $employeeProductivity,
+            'personalSummary' => $personalSummary,
+            'taskProgressList' => $taskProgressList,
+            'reportRange' => [
+                'fromDate' => $fromDate,
+                'toDate' => $toDate,
+            ],
+        ];
+    }
+
+    /**
+     * Tổng hợp dữ liệu thống kê sản lượng năng suất đồ gỗ và bảng xếp hạng thợ mộc
+     */
+    public function getPerformanceSummary()
+    {
+        $currentUser = $this->getCurrentUser();
+        if (!$currentUser) {
+            return $this->failUnauthorized('Vui lòng đăng nhập lại');
+        }
+
+        $fromDate = $this->parseDateParam('from_date');
+        $toDate = $this->parseDateParam('to_date');
+
+        return $this->respond($this->buildPerformanceData($currentUser, $fromDate, $toDate));
+    }
+
+    public function exportExcel()
+    {
+        $currentUser = $this->getCurrentUser();
+        if (!$currentUser) {
+            return $this->failUnauthorized('Vui lòng đăng nhập lại');
+        }
+
+        if (!$this->canViewAllData($currentUser)) {
+            return $this->failForbidden('Chỉ quản trị được xuất Excel dữ liệu tổng hợp.');
+        }
+
+        $fromDate = $this->parseDateParam('from_date');
+        $toDate = $this->parseDateParam('to_date');
+        $data = $this->buildPerformanceData($currentUser, $fromDate, $toDate);
+
+        $handle = fopen('php://temp', 'r+');
+        if ($handle === false) {
+            return $this->failServerError('Không thể tạo dữ liệu xuất.');
+        }
+
+        fwrite($handle, "\xEF\xBB\xBF");
+
+        fputcsv($handle, ['BAO CAO HIEU SUAT NHAN SU']);
+        fputcsv($handle, ['Tu ngay', (string) ($data['reportRange']['fromDate'] ?? '')]);
+        fputcsv($handle, ['Den ngay', (string) ($data['reportRange']['toDate'] ?? '')]);
+        fputcsv($handle, []);
+
+        fputcsv($handle, ['Tong nhan vien', (int) ($data['summary']['totalStaff'] ?? 0)]);
+        fputcsv($handle, ['Tong cong viec', (int) ($data['summary']['totalTasks'] ?? 0)]);
+        fputcsv($handle, ['Cong viec cho bat dau', (int) ($data['summary']['pendingTasks'] ?? 0)]);
+        fputcsv($handle, ['Cong viec dang lam', (int) ($data['summary']['inProgressTasks'] ?? 0)]);
+        fputcsv($handle, ['Cong viec hoan thanh', (int) ($data['summary']['completedTasks'] ?? 0)]);
+        fputcsv($handle, []);
+
+        fputcsv($handle, ['Bang xep hang']);
+        fputcsv($handle, ['STT', 'Ma nhan vien', 'Ten nhan vien', 'So cong viec duoc giao', 'So bao cao duyet', 'Diem nang suat']);
+
+        foreach ($data['employeeProductivity'] ?? [] as $index => $row) {
+            fputcsv($handle, [
+                $index + 1,
+                (string) ($row['userId'] ?? ''),
+                (string) ($row['name'] ?? ''),
+                (int) ($row['assignedTasksCount'] ?? 0),
+                (int) ($row['approvedLogsCount'] ?? 0),
+                (int) ($row['totalProgressPoints'] ?? 0),
+            ]);
+        }
+
+        rewind($handle);
+        $csvContent = stream_get_contents($handle) ?: '';
+        fclose($handle);
+
+        $filename = 'bao-cao-hieu-suat-' . date('Ymd_His') . '.csv';
+
+        return $this->response
+            ->setHeader('Content-Type', 'text/csv; charset=UTF-8')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setBody($csvContent);
     }
 }

@@ -58,46 +58,47 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/vn.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 
 <body id="moc-viet-body" class="min-h-screen bg-slate-50 flex flex-col text-slate-800">
 
     <!-- GLOBAL TOP NAVBAR -->
     <header id="app-header"
-        class="bg-white border-b border-slate-200 text-slate-800 z-30 sticky top-0 px-4 py-3 shadow-sm no-print">
+        class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-b border-indigo-800/60 text-white z-30 sticky top-0 px-4 py-3 shadow-lg no-print">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <button onclick="toggleMobileMenu()"
-                    class="lg:hidden p-1.5 rounded-lg hover:bg-slate-100 focus:outline-none cursor-pointer">
+                    class="lg:hidden p-1.5 rounded-lg hover:bg-white/15 focus:outline-none cursor-pointer">
                     <i data-lucide="menu" class="w-5 h-5" id="mobile-menu-trigger"></i>
                 </button>
                 <div class="flex items-center gap-2">
                     <div
-                        class="w-8 h-8 rounded-lg bg-indigo-100 border border-indigo-200 flex items-center justify-center">
-                        <i data-lucide="hammer" class="w-4.5 h-4.5 text-indigo-600"></i>
+                        class="w-8 h-8 rounded-lg bg-white/10 border border-indigo-300/35 flex items-center justify-center">
+                        <i data-lucide="hammer" class="w-4.5 h-4.5 text-indigo-200"></i>
                     </div>
                     <div>
                         <span class="font-extrabold tracking-tight text-sm uppercase brand-font">WorkHub</span>
-                        <span class="text-[9px] text-slate-500 block font-mono leading-none">QUẢN LÝ NHÂN SỰ</span>
+                        <span class="text-[9px] text-indigo-100/80 block font-mono leading-none">QUẢN LÝ NHÂN SỰ</span>
                     </div>
                 </div>
             </div>
 
             <div class="flex items-center gap-4">
                 <!-- Clock Indicator -->
-                <div class="hidden md:flex items-center gap-1.5 text-xs text-slate-600 font-mono">
-                    <i data-lucide="clock" class="w-4 h-4 text-slate-500"></i>
+                <div class="hidden md:flex items-center gap-1.5 text-xs text-indigo-100 font-mono">
+                    <i data-lucide="clock" class="w-4 h-4 text-indigo-200"></i>
                     <span>Hôm nay: <strong>2026-05-21</strong> (Mũi Giờ Việt Nam)</span>
                 </div>
 
                 <!-- Account Badge -->
                 <button onclick="openProfileModal()"
-                    class="h-14 flex items-center gap-2.5 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-200 cursor-pointer transition-all text-slate-800 text-left focus:outline-none">
+                    class="h-14 flex items-center gap-2.5 bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-xl border border-indigo-300/30 cursor-pointer transition-all text-white text-left focus:outline-none">
                     <img src="<?= $currentUser['avatar'] ?? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150' ?>"
-                        alt="Avatar" class="w-10 h-10 shrink-0 rounded-full object-cover border border-slate-200">
+                        alt="Avatar" class="w-10 h-10 shrink-0 rounded-full object-cover border border-indigo-200/40">
                     <div class="hidden sm:block">
                         <p class="text-xs font-bold leading-tight"><?= esc($currentUser['name']) ?></p>
-                        <span class="text-[9px] uppercase tracking-wider text-slate-500 font-semibold font-mono">
+                        <span class="text-[9px] uppercase tracking-wider text-indigo-100/85 font-semibold font-mono">
                             <?php 
                                 if($currentUser['role'] === 'admin') echo 'Quản trị viên';
                                 elseif($currentUser['role'] === 'manager') echo 'Quản lý';
@@ -109,7 +110,7 @@
 
                 <!-- Logout Link -->
                 <a href="<?= base_url('logout') ?>"
-                    class="px-2.5 py-1.5 hover:bg-rose-50 text-slate-600 hover:text-rose-600 rounded-lg text-xs transition-all flex items-center gap-1 font-semibold cursor-pointer">
+                    class="px-2.5 py-1.5 hover:bg-rose-500/20 text-indigo-100 hover:text-rose-200 rounded-lg text-xs transition-all flex items-center gap-1 font-semibold cursor-pointer">
                     <i data-lucide="log-out" class="w-4 h-4"></i>
                     <span class="hidden sm:inline">Đăng xuất</span>
                 </a>
@@ -690,62 +691,103 @@
 
             <!-- TAB CONTAINER 6: PERFORMANCE SUMMARY (REPORTS) -->
             <section id="viewport-reports" class="viewport-tab hidden space-y-6">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                    <div>
-                        <h1 class="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                            <i data-lucide="bar-chart-3" class="text-indigo-600 w-6 h-6"></i> Thống Kê Hiệu Suất Công
-                            Việc
-                        </h1>
-                        <p class="text-xs text-slate-500">Tính toán hiệu suất tích lũy dựa trên công việc đã được duyệt.
-                        </p>
+                <div class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm no-print space-y-4">
+                    <div class="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-4">
+                        <div>
+                            <h1 class="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                                <i data-lucide="bar-chart-3" class="text-indigo-600 w-6 h-6"></i> Thống Kê Hiệu Suất Công Việc
+                            </h1>
+                            <p class="text-xs text-slate-500">Lọc theo khoảng ngày để xem đúng sản lượng và điểm năng suất.</p>
+                        </div>
+                        <div class="text-[11px] text-slate-500 font-semibold" id="report-range-label">Toàn bộ thời gian</div>
                     </div>
-                    <button onclick="window.print()"
-                        class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer shadow-sm transition-all no-print">
-                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> In Báo Cáo PDF
-                    </button>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Từ ngày</label>
+                            <input type="date" id="report-from-date"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-indigo-600 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Đến ngày</label>
+                            <input type="date" id="report-to-date"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-indigo-600 focus:outline-none">
+                        </div>
+                        <div class="flex gap-2 md:col-span-2">
+                            <button onclick="applyReportFilters()"
+                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm cursor-pointer">Lọc báo cáo</button>
+                            <button onclick="clearReportFilters()"
+                                class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold cursor-pointer">Xóa lọc</button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="exportReportPdf()"
+                            class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer shadow-sm transition-all">
+                            <i data-lucide="file-text" class="w-4 h-4"></i> Xuất PDF
+                        </button>
+                        <button onclick="exportReportImage()"
+                            class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer shadow-sm transition-all">
+                            <i data-lucide="image" class="w-4 h-4"></i> Xuất Ảnh
+                        </button>
+                        <?php if (($currentUser['role'] ?? '') === 'admin'): ?>
+                        <button onclick="exportReportExcel()"
+                            class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer shadow-sm transition-all">
+                            <i data-lucide="sheet" class="w-4 h-4"></i> Xuất Excel dữ liệu
+                        </button>
+                        <?php endif; ?>
+                    </div>
                 </div>
 
-                <!-- Highlight Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Performance Ranking Board -->
-                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
-                        <div class="border-b border-slate-100 pb-2">
-                            <h3
-                                class="text-xs font-bold text-slate-900 uppercase tracking-widest flex items-center gap-1">
-                                <i data-lucide="award" class="w-4 h-4 text-amber-500"></i> BẢNG XẾP HẠNG HIỆU SUẤT THEO
-                                TÍCH ĐIỂM
-                            </h3>
+                <div id="report-export-target" class="space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+                            <p class="text-[10px] uppercase tracking-wider font-bold text-slate-500" id="report-card-label-tasks">Số lượng công việc</p>
+                            <p class="text-2xl font-extrabold text-slate-900 mt-1" id="report-my-tasks">0</p>
                         </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-xs">
-                                <thead>
-                                    <tr
-                                        class="bg-slate-50 text-slate-400 uppercase tracking-wider text-[9px] font-bold border-b border-slate-100">
-                                        <th class="py-2 px-3">Hạng / Nhân viên</th>
-                                        <th class="py-2 px-3 text-center">Đầu việc gán</th>
-                                        <th class="py-2 px-3 text-center">Báo cáo ngày chuẩn</th>
-                                        <th class="py-2 px-3 text-right">Tổng tiến độ tích</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-slate-100 text-slate-600 font-medium"
-                                    id="performance-table-body">
-                                    <!-- Populated dynamically via Report api -->
-                                </tbody>
-                            </table>
+                        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+                            <p class="text-[10px] uppercase tracking-wider font-bold text-slate-500" id="report-card-label-logs">Số lượng báo cáo</p>
+                            <p class="text-2xl font-extrabold text-slate-900 mt-1" id="report-my-logs">0</p>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+                            <p class="text-[10px] uppercase tracking-wider font-bold text-slate-500" id="report-card-label-points">Điểm năng suất</p>
+                            <p class="text-2xl font-extrabold text-indigo-700 mt-1" id="report-my-points">0%</p>
                         </div>
                     </div>
 
-                    <!-- Workload Progress Overview -->
-                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
-                        <div class="border-b border-slate-100 pb-2">
-                            <h3
-                                class="text-xs font-bold text-slate-900 uppercase tracking-widest flex items-center gap-1">
-                                <i data-lucide="clipboard-list" class="w-4 h-4 text-indigo-500"></i> TIẾN ĐỘ THÔ CỦA CÁC
-                                ĐẦU MỤC CÔNG VIỆC GIAO
-                            </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Performance Ranking Board -->
+                        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                            <div class="border-b border-slate-100 pb-2">
+                                <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest flex items-center gap-1">
+                                    <i data-lucide="award" class="w-4 h-4 text-amber-500"></i> BẢNG XẾP HẠNG HIỆU SUẤT
+                                </h3>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead>
+                                        <tr class="bg-slate-50 text-slate-400 uppercase tracking-wider text-[9px] font-bold border-b border-slate-100">
+                                            <th class="py-2 px-3">Hạng / Nhân viên</th>
+                                            <th class="py-2 px-3 text-center">Đầu việc gán</th>
+                                            <th class="py-2 px-3 text-center">Báo cáo duyệt</th>
+                                            <th class="py-2 px-3 text-right">Điểm năng suất</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 text-slate-600 font-medium" id="performance-table-body"></tbody>
+                                </table>
+                            </div>
                         </div>
-                        <div class="space-y-4" id="report-tasks-list-container">
-                            <p class="text-xs text-slate-400 italic text-center py-6">Đang tổng kết dữ liệu...</p>
+
+                        <!-- Workload Progress Overview -->
+                        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                            <div class="border-b border-slate-100 pb-2">
+                                <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest flex items-center gap-1">
+                                    <i data-lucide="clipboard-list" class="w-4 h-4 text-indigo-500"></i> TIẾN ĐỘ CÁC ĐẦU MỤC CÔNG VIỆC
+                                </h3>
+                            </div>
+                            <div class="space-y-4" id="report-tasks-list-container">
+                                <p class="text-xs text-slate-400 italic text-center py-6">Đang tổng kết dữ liệu...</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1253,7 +1295,7 @@
         if (typeof flatpickr !== 'function') return;
 
         const dateFieldIds = ['staff-dob', 'task-start-date', 'task-end-date', 'log-date', 'profile-dob',
-            'filter-task-from', 'filter-task-to'
+            'filter-task-from', 'filter-task-to', 'report-from-date', 'report-to-date'
         ];
         dateFieldIds.forEach(fieldId => {
             const field = document.getElementById(fieldId);
@@ -1289,6 +1331,103 @@
         if (field) field.value = normalized;
     }
 
+    function getReportFilterValues() {
+        const fromInput = document.getElementById('report-from-date');
+        const toInput = document.getElementById('report-to-date');
+
+        let fromDate = (fromInput?.value || '').trim();
+        let toDate = (toInput?.value || '').trim();
+
+        if (fromDate && toDate && fromDate > toDate) {
+            const temp = fromDate;
+            fromDate = toDate;
+            toDate = temp;
+        }
+
+        return {
+            fromDate,
+            toDate
+        };
+    }
+
+    function getReportFilterQueryString() {
+        const {
+            fromDate,
+            toDate
+        } = getReportFilterValues();
+
+        const params = new URLSearchParams();
+        if (fromDate) params.set('from_date', fromDate);
+        if (toDate) params.set('to_date', toDate);
+
+        const query = params.toString();
+        return query ? `?${query}` : '';
+    }
+
+    function applyReportFilters() {
+        syncData();
+    }
+
+    function clearReportFilters() {
+        setDateFieldValue('report-from-date', '');
+        setDateFieldValue('report-to-date', '');
+        syncData();
+    }
+
+    function exportReportPdf() {
+        window.print();
+    }
+
+    async function exportReportImage() {
+        const target = document.getElementById('report-export-target');
+        if (!target) return;
+
+        if (typeof html2canvas !== 'function') {
+            showToast('alarm', 'Thiếu thư viện', 'Không thể xuất ảnh lúc này.');
+            return;
+        }
+
+        try {
+            const canvas = await html2canvas(target, {
+                useCORS: true,
+                backgroundColor: '#f8fafc',
+                scale: 2
+            });
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = `bao-cao-${getTodayISODate()}.png`;
+            link.click();
+        } catch (err) {
+            console.error(err);
+            showToast('alarm', 'Xuất ảnh thất bại', 'Không thể tạo ảnh báo cáo.');
+        }
+    }
+
+    async function exportReportExcel() {
+        if (PHP_CURRENT_USER.role !== 'admin') {
+            showToast('alarm', 'Không đủ quyền', 'Chỉ quản trị mới được xuất Excel dữ liệu.');
+            return;
+        }
+
+        try {
+            const response = await fetch('<?= base_url('api/dashboard/export-excel') ?>' + getReportFilterQueryString());
+            if (!response.ok) {
+                throw new Error('Export failed');
+            }
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `bao-cao-hieu-suat-${getTodayISODate()}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error(err);
+            showToast('alarm', 'Xuất Excel thất bại', 'Không thể xuất dữ liệu Excel lúc này.');
+        }
+    }
+
     // Initialize Lucide Icons initially
     lucide.createIcons();
 
@@ -1309,12 +1448,13 @@
     // ----------------------------------------------------
     async function syncData() {
         try {
+            const reportQuery = getReportFilterQueryString();
             // Parrallel requests to API Controllers
             const [staffRes, tasksRes, logsRes, statsRes, categoriesRes] = await Promise.all([
                 fetch('<?= base_url('api/users') ?>'),
                 fetch('<?= base_url('api/tasks') ?>'),
                 fetch('<?= base_url('api/logs') ?>'),
-                fetch('<?= base_url('api/dashboard/stats') ?>'),
+                fetch('<?= base_url('api/dashboard/stats') ?>' + reportQuery),
                 fetch('<?= base_url('api/categories') ?>')
             ]);
 
@@ -3021,6 +3161,43 @@
     function renderPerformanceReports() {
         if (!cacheStats) return;
 
+        const isAdmin = PHP_CURRENT_USER.role === 'admin';
+        const personal = cacheStats.personalSummary || {
+            assignedTasksCount: 0,
+            approvedLogsCount: 0,
+            totalProgressPoints: 0
+        };
+
+        const rangeLabel = document.getElementById('report-range-label');
+        const reportRange = cacheStats.reportRange || {};
+        if (rangeLabel) {
+            const fromLabel = reportRange.fromDate || '';
+            const toLabel = reportRange.toDate || '';
+            if (fromLabel && toLabel) {
+                rangeLabel.innerText = `Khoảng lọc: ${fromLabel} đến ${toLabel}`;
+            } else if (fromLabel) {
+                rangeLabel.innerText = `Khoảng lọc: từ ${fromLabel}`;
+            } else if (toLabel) {
+                rangeLabel.innerText = `Khoảng lọc: đến ${toLabel}`;
+            } else {
+                rangeLabel.innerText = 'Toàn bộ thời gian';
+            }
+        }
+
+        const tasksCardLabel = document.getElementById('report-card-label-tasks');
+        const logsCardLabel = document.getElementById('report-card-label-logs');
+        const pointsCardLabel = document.getElementById('report-card-label-points');
+        const tasksCardValue = document.getElementById('report-my-tasks');
+        const logsCardValue = document.getElementById('report-my-logs');
+        const pointsCardValue = document.getElementById('report-my-points');
+
+        if (tasksCardLabel) tasksCardLabel.innerText = isAdmin ? 'Tổng công việc toàn hệ thống' : 'Số lượng công việc của tôi';
+        if (logsCardLabel) logsCardLabel.innerText = isAdmin ? 'Tổng báo cáo duyệt toàn hệ thống' : 'Số lượng báo cáo của tôi';
+        if (pointsCardLabel) pointsCardLabel.innerText = isAdmin ? 'Tổng điểm năng suất toàn hệ thống' : 'Điểm năng suất cá nhân';
+        if (tasksCardValue) tasksCardValue.innerText = `${personal.assignedTasksCount || 0}`;
+        if (logsCardValue) logsCardValue.innerText = `${personal.approvedLogsCount || 0}`;
+        if (pointsCardValue) pointsCardValue.innerText = `${personal.totalProgressPoints || 0}%`;
+
         // Productivity leaderboard
         const tbody = document.getElementById('performance-table-body');
         tbody.innerHTML = '';
@@ -3065,17 +3242,15 @@
         const tContainer = document.getElementById('report-tasks-list-container');
         tContainer.innerHTML = '';
 
-        if (cacheTasks.length === 0) {
+        const taskProgressList = cacheStats.taskProgressList || [];
+
+        if (taskProgressList.length === 0) {
             tContainer.innerHTML =
                 `<p class="text-xs text-slate-400 italic text-center py-6">Không có nhiệm vụ bàn giao gỗ.</p>`;
             return;
         }
 
-        cacheTasks.forEach(task => {
-            const approvedLogs = cacheLogs.filter(l => l.task_id === task.id && l.status === "approved");
-            const progressLevel = approvedLogs.length === 0 ? 0 : Math.max(...approvedLogs.map(l => parseInt(l
-                .progress_percent)));
-
+        taskProgressList.forEach(task => {
             const card = document.createElement('div');
             card.className =
                 "space-y-1.5 p-3.5 bg-slate-50 border border-slate-150 rounded-xl hover:bg-slate-100/50 transition-all";
@@ -3083,17 +3258,17 @@
                     <div class="flex justify-between items-start gap-2">
                         <div>
                             <span class="text-slate-800 font-bold text-xs">${task.title}</span>
-                            <span class="block text-[9px] text-slate-400 font-mono">${task.start_date} ~ ${task.end_date}</span>
+                            <span class="block text-[9px] text-slate-400 font-mono">${task.startDate} ~ ${task.endDate}</span>
                         </div>
-                        <span class="text-[9px] bg-slate-200 text-slate-800 font-bold uppercase rounded px-1">${task.status === 'completed' ? 'Hoàn thiện' : 'Chạy ráp'}</span>
+                        <span class="text-[9px] bg-slate-200 text-slate-800 font-bold uppercase rounded px-1">${task.status === 'completed' ? 'Hoàn thiện' : (task.status === 'in_progress' ? 'Đang làm' : 'Chờ bắt đầu')}</span>
                     </div>
                     <div class="space-y-1 pt-1">
                         <div class="flex justify-between text-[9px]">
                             <span class="text-slate-500 font-semibold">Tỷ lệ tiến trình:</span>
-                            <span class="font-mono text-slate-900 font-bold">${progressLevel}%</span>
+                            <span class="font-mono text-slate-900 font-bold">${task.progress}%</span>
                         </div>
                         <div class="w-full bg-slate-200 rounded-full h-1 overflow-hidden">
-                            <div class="h-full bg-indigo-600 rounded-full" style="width: ${progressLevel}%"></div>
+                            <div class="h-full bg-indigo-600 rounded-full" style="width: ${task.progress}%"></div>
                         </div>
                     </div>
                 `;
